@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BabelFish</string>
+    <string name="first_entry">Hello! To what target language should be translated?</string>
+</resources>
