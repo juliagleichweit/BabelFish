@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">BabelFish</string>
-    <string name="first_entry">Hallo! In welche Sprache soll übersetzt werden?</string>
+    <string name="first_entry">Wählen Sie Ihre Zielsprache:</string>
+    <string name="target_lang_DE">Deutsch ist Zielsprache</string>
+    <string name="target_lang_EN">Englisch ist Zielsprache</string>
 </resources>
