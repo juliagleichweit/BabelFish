@@ -3,4 +3,5 @@
     <string name="first_entry">Choose your target language:</string>
     <string name="target_lang_EN">English is target language</string>
     <string name="target_lang_DE">German is target language</string>
+    <string name="action_lang">Change target language</string>
 </resources>

@@ -3,4 +3,5 @@
     <string name="first_entry">Wählen Sie Ihre Zielsprache:</string>
     <string name="target_lang_DE">Deutsch ist Zielsprache</string>
     <string name="target_lang_EN">Englisch ist Zielsprache</string>
+    <string name="action_lang">Zielsprache ändern</string>
 </resources>

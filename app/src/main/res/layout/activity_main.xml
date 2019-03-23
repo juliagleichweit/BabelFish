@@ -11,8 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
+        app:titleTextColor="#FFFFFF"
         android:minHeight="?attr/actionBarSize"
-        android:theme="?attr/actionBarTheme"
+        android:theme="@style/AppTheme"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -31,15 +32,16 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.2" />
 
-    <Button
-        android:id="@+id/button"
+    <ImageView
+        android:id="@+id/dummy_record"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Press Me!"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hello_world" />
+        app:layout_constraintTop_toBottomOf="@+id/hello_world"
+        app:srcCompat="@android:drawable/ic_btn_speak_now" />
+
 
 </android.support.constraint.ConstraintLayout>

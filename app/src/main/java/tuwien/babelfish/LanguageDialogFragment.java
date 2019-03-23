@@ -1,3 +1,20 @@
+/**
+ * BabelFish
+ * Copyright (C) 2019  Julia Gleichweit
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package tuwien.babelfish;
 
 import android.app.Activity;
@@ -8,8 +25,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+/**
+ * Fragment used to edit target language preferences
+ */
 public class LanguageDialogFragment extends DialogFragment {
+
+    static LanguageDialogFragment newInstance() {
+        return new LanguageDialogFragment();
+    }
+
     OnLanguageSelectedListener callback;
+
+    public static final int LANG_DE = 1;
+    public static  final int LANG_EN = 2;
+
+    private int lastLang = -1;
 
     public void setOnLanguageSelectedListener(Activity activity){
         callback = (OnLanguageSelectedListener) activity;
@@ -18,7 +48,7 @@ public class LanguageDialogFragment extends DialogFragment {
     //Container Activity must implement this interface
     //used to pass messages from fragment to containing UI
     public interface OnLanguageSelectedListener{
-        void onSelectedLanguage(int lang_Code);
+        void onSelectedLanguage(int langCode);
     }
 
     @Override
@@ -29,7 +59,7 @@ public class LanguageDialogFragment extends DialogFragment {
         iv_DE.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                callback.onSelectedLanguage(1);
+                callback.onSelectedLanguage(LanguageDialogFragment.LANG_DE);
                 dismiss();
             }
         });
@@ -42,7 +72,7 @@ public class LanguageDialogFragment extends DialogFragment {
 
                 Toast toast = Toast.makeText(context, view.getContentDescription(), duration);
                 toast.show();*/
-               callback.onSelectedLanguage(2);
+               callback.onSelectedLanguage(LanguageDialogFragment.LANG_EN);
                dismiss();
             }
         });
