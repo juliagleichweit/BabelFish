@@ -4,4 +4,7 @@
     <string name="target_lang_EN">English is target language</string>
     <string name="target_lang_DE">German is target language</string>
     <string name="action_lang">Change target language</string>
+    <string name="voice_rec_status_on">Tap the microfon to start recording</string>
+    <string name="voice_rec_status_off">Missing permission to record audio</string>
+    <string name="record_content_descr">microphon symbol to start recording</string>
 </resources>

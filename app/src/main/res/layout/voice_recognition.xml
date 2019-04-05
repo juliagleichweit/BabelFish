@@ -6,12 +6,11 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/voice_rec_expl"
+        android:id="@+id/voice_rec_stat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="15sp"
         android:layout_marginRight="15sp"
-        android:text="Hello World!"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textSize="24sp"
@@ -29,7 +28,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/voice_rec_expl"
+        app:layout_constraintTop_toBottomOf="@+id/voice_rec_stat"
+        android:contentDescription="@string/record_content_descr"
         app:srcCompat="@android:drawable/ic_btn_speak_now" />
 
 </android.support.constraint.ConstraintLayout>

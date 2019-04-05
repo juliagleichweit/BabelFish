@@ -4,4 +4,7 @@
     <string name="target_lang_DE">Deutsch ist Zielsprache</string>
     <string name="target_lang_EN">Englisch ist Zielsprache</string>
     <string name="action_lang">Zielsprache ändern</string>
+    <string name="voice_rec_status_on">Berühren des Mikrofons startet die Aufnahme</string>
+    <string name="voice_rec_status_off">Fehlende Berechtigung zum Aufnehmen</string>
+    <string name="record_content_descr">Mikrofonsymbil zum Starten der Aufnahme</string>
 </resources>

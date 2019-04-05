@@ -22,7 +22,9 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -99,6 +101,11 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
 
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
+         super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+    }
     private void checkLanguagePref() {
 
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
@@ -121,11 +128,11 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         if(langPrefMenu !=null) {
             switch (langCode) {
                 case LanguageDialogFragment.LANG_DE:
-                    langPrefMenu.setIcon(getResources().getDrawable(R.drawable.de));
+                    langPrefMenu.setIcon(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.de));
                     langPrefMenu.setVisible(true);
                     break;
                 case LanguageDialogFragment.LANG_EN:
-                    langPrefMenu.setIcon(getResources().getDrawable(R.drawable.en));
+                    langPrefMenu.setIcon(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.en));
                     langPrefMenu.setVisible(true);
                     break;
                 default:
