@@ -15,20 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package tuwien.babelfish;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -38,27 +43,22 @@ public class VoiceRecognition extends Fragment {
 
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 15;
     private boolean allowRecording = false;
-    private TextView statusMsg;
+    private ImageView microfon_icon;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.voice_recognition, container, false);
 
-        allowRecording = permissionCheck();
-        ImageView dummy_record = rootView.findViewById(R.id.dummy_record);
-        dummy_record.setOnClickListener(new View.OnClickListener() {
+        //allowRecording = permissionCheck();
+        microfon_icon = rootView.findViewById(R.id.microfon);
+        microfon_icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Context context = getActivity().getApplicationContext();
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast toast = Toast.makeText(context, "I want to record", duration);
-                toast.show();
                 permissionCheck();
             }
         });
 
-        statusMsg = rootView.findViewById(R.id.voice_rec_stat);
+
         return rootView;
     }
 
@@ -71,28 +71,66 @@ public class VoiceRecognition extends Fragment {
 
             // Permission is not granted
             // Should we show an explanation?
-           /* if (ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
                     Manifest.permission.RECORD_AUDIO)) {
                 // returns true if the user has previously denied the request, and returns
                 // false if a user has denied a permission and selected the Don't ask again option
-            } else */{
+                showPermissionInfoDialog();
+            } else {
                 // No explanation needed; request the permission
                 ActivityCompat.requestPermissions(getActivity(),
                         new String[]{Manifest.permission.RECORD_AUDIO},
                         MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
 
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
+                // MY_PERMISSIONS_REQUEST_XXX is an app-defined int constant.
+                // The callback method gets the result of the request.
                 return false;
             }
         } else {
             // Permission has already been granted
-            if(statusMsg != null)
-                statusMsg.setText(getResources().getString(R.string.voice_rec_status_on));
-
+            //microfon_icon.setImageDrawable(getResources().getDrawable(R.drawable.microphone));
             return true;
         }
+        return false;
+    }
+
+    private void showPermissionInfoDialog() {
+        AlertDialog.Builder builder =  new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.title_missing_permission);
+        builder.setMessage(R.string.missing_record_permission);
+        builder.setCancelable(true);
+
+        // on ok go to settings page
+        builder.setPositiveButton(R.string.settings, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                try {
+                    dialogInterface.dismiss();
+
+                    Intent settingsIntent = new Intent();
+
+                    // we want to display the application's settings page
+                    settingsIntent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    settingsIntent.addCategory(Intent.CATEGORY_DEFAULT);
+                    settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    //identify our app
+                    settingsIntent.setData(Uri.fromParts("package", getActivity().getPackageName(), null)); //parse("package: " + getActivity().getPackageName()));
+
+                    //start our intent
+                    startActivity(settingsIntent);
+                }catch (Exception e){
+
+                    Context context = getActivity().getApplicationContext();
+                    int duration = Toast.LENGTH_LONG;
+
+                    Toast toast = Toast.makeText(context, e.getMessage(), duration);
+                    toast.show();
+                }
+            }
+        });
+        // automatically creates and immediately shows the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override
@@ -107,15 +145,11 @@ public class VoiceRecognition extends Fragment {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted
                     allowRecording = true;
-                    if(statusMsg != null)
-                        statusMsg.setText(getResources().getString(R.string.voice_rec_status_on));
 
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     allowRecording = false;
-                    if(statusMsg != null)
-                        statusMsg.setText(getResources().getString(R.string.voice_rec_status_off));
                 }
                 return;
             }

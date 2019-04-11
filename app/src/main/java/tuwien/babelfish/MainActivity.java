@@ -22,7 +22,6 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -52,27 +51,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
-        /*// Get a string resource from your app's Resources
-        String hello = getResources().getString(R.string.first_entry);
-
-        // Or supply a string resource to a method that requires a string
-        TextView textView = findViewById(R.id.hello_world);
-        textView.setText(R.string.first_entry);
-
-        button = findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-               /* Context context = getApplicationContext();
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast toast = Toast.makeText(context, "Seventeen right here!", duration);
-                toast.show();
-                FragmentManager fm = getFragmentManager();
-                LanguageDialogFragment dialogFragment = new LanguageDialogFragment();
-                dialogFragment.show(fm, "Sample Fragment");
-            }
-        });*/
     }
 
 
@@ -105,6 +83,12 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
     public void onRequestPermissionsResult(int requestCode,
                                            String[] permissions, int[] grantResults) {
          super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+
+         // push results to fragments, needed for < API 23;
+        // otherwise requestPermission could be directly called from a Fragment and the result
+        // processed in Fragment.onRequestPermissionResult
+         for(android.support.v4.app.Fragment f: getSupportFragmentManager().getFragments())
+             f.onRequestPermissionsResult(requestCode, permissions,grantResults);
     }
     private void checkLanguagePref() {
 

@@ -7,4 +7,7 @@
     <string name="voice_rec_status_on">Tap the microfon to start recording</string>
     <string name="voice_rec_status_off">Missing permission to record audio</string>
     <string name="record_content_descr">microphon symbol to start recording</string>
+    <string name="missing_record_permission">Microfon permission is needed.  Permissions can be organized in the application settings.</string>
+    <string name="title_missing_permission">Missing Permission</string>
+    <string name="settings">Settings</string>
 </resources>
