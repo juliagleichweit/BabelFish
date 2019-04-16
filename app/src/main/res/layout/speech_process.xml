@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center">
+
+    <EditText
+        android:id="@+id/tv_spoken_text"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:text="TextView"
+        android:gravity="start"
+        android:background="@color/colorAccent"
+        app:layout_constraintBottom_toTopOf="@+id/tv_translated_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/tv_translated_text"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/colorPrimary"
+        android:text="TextView"
+        android:gravity="start"
+        app:layout_constraintBottom_toTopOf="@+id/record_button"
+        app:layout_constraintEnd_toEndOf="@+id/tv_spoken_text"
+        app:layout_constraintStart_toStartOf="@+id/tv_spoken_text"
+        app:layout_constraintTop_toBottomOf="@+id/tv_spoken_text" />
+
+    <ImageView
+        android:id="@+id/record_button"
+        android:layout_width="99dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tv_translated_text"
+        app:layout_constraintStart_toStartOf="@+id/tv_translated_text"
+        app:layout_constraintTop_toBottomOf="@+id/tv_translated_text"
+        android:contentDescription="@string/record_content_descr"
+        app:srcCompat="@drawable/microphone" />
+</android.support.constraint.ConstraintLayout>
+

@@ -47,14 +47,19 @@ public class VoiceRecognition extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.voice_recognition, container, false);
+        View rootView = inflater.inflate(R.layout.speech_process, container, false);
 
         //allowRecording = permissionCheck();
-        microfon_icon = rootView.findViewById(R.id.microfon);
+        microfon_icon = rootView.findViewById(R.id.record_button);
         microfon_icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                permissionCheck();
+                //permissionCheck();
+                Context context = getActivity().getApplicationContext();
+                int duration = Toast.LENGTH_SHORT;
+
+                Toast toast = Toast.makeText(context, view.getContentDescription(), duration);
+                toast.show();
             }
         });
 

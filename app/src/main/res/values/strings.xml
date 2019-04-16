@@ -6,7 +6,7 @@
     <string name="action_lang">Zielsprache ändern</string>
     <string name="voice_rec_status_on">Berühren des Mikrofons startet die Aufnahme</string>
     <string name="voice_rec_status_off">Fehlende Berechtigung zum Aufnehmen</string>
-    <string name="record_content_descr">Mikrofonsymbil zum Starten der Aufnahme</string>
+    <string name="record_content_descr">Mikrofonsymbol zum Starten der Aufnahme</string>
     <string name="missing_record_permission">Mikrofon-Berechtigung wird benötigt. Berechtigungen können in den App-Einstellungen angepasst werden.</string>
     <string name="title_missing_permission">Fehlende Berechtigung</string>
     <string name="settings">Einstellungen</string>
