@@ -200,6 +200,8 @@ public class SpeechRecognition extends Fragment implements SpeechService {
         Toast toast = Toast.makeText(context, view.getContentDescription(), duration);
         toast.show();*/
 
+        clearEditText();
+
         // start service on first click
         if (!startListening) {
             AndroidSpeechService.getInstance().startSpeechService(this);
@@ -208,6 +210,17 @@ public class SpeechRecognition extends Fragment implements SpeechService {
             AndroidSpeechService instance = AndroidSpeechService.getInstance();
             instance.restartListening();
         }
+    }
+
+    /**
+     * Remove any text in the EditText views
+     */
+    private void clearEditText() {
+        if(et_speech_input != null)
+            et_speech_input.setText(null);
+
+        if(et_translation != null)
+            et_translation.setText(null);
     }
 
     @Override

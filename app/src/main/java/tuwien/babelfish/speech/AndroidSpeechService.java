@@ -33,7 +33,7 @@ import tuwien.babelfish.SpeechRecognition;
 
 /**
  *  Implements the standard API SpeechRecognizer to convert speech to text
- *  Implementing RecognitionListener dismisses the Google Dialog
+ *  Implementing RecognitionListener suppresses the Google Dialog
  */
 public class AndroidSpeechService implements RecognitionListener {
 
@@ -75,9 +75,12 @@ public class AndroidSpeechService implements RecognitionListener {
      */
     public void setLangPreference(String langCode){
         this.langCode = langCode;
-		speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, langCode);
-		speechRecognizer.destroy();
-		speechRecognizer = null;
+
+        if(speechRecognizer != null) {
+            speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, langCode);
+            speechRecognizer.destroy();
+            speechRecognizer = null;
+        }
     }
 
     /**
@@ -118,6 +121,7 @@ public class AndroidSpeechService implements RecognitionListener {
         }else {
             // if(!listening)
             Log.d(TAG, "restart listening");
+            speechRecognizer.cancel();
             speechRecognizer.startListening(speechRecognitionIntent);
         }
     }
