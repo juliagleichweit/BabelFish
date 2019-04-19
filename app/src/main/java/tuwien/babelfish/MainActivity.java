@@ -31,6 +31,8 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
 
+import tuwien.babelfish.speech.AndroidSpeechService;
+
 /**
  * This is used to launch speacch processing activities
  */
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         setContentView(R.layout.activity_main);
 
         // add custom toolbar
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar myToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
     }
@@ -73,9 +75,9 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
             langDiaFrag.setOnLanguageSelectedListener(this);
         }
 
-        /*if(fragment instanceof VoiceReognition){
+        if(fragment instanceof SpeechRecognition){
 
-        }*/
+        }
 
     }
 
@@ -135,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
                 dialogFragment.show(fm, "Sample Fragment");
                 return true;
 
-
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -160,6 +161,26 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
             editor.apply();
 
             updateLangIcon(langCode);
+            AndroidSpeechService.getInstance().setLangPreference(LanguageDialogFragment.getCode(langCode));
         }
     }
+
+   /* @Override
+    public void onStop() {
+        super.onStop();
+        endSpeechService();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        endSpeechService();
+    }
+
+    private void endSpeechService(){
+        AndroidSpeechService.getInstance().stopListening(true);
+        AndroidSpeechService instance = AndroidSpeechService.getInstance();
+        instance.stopListening(true);
+        instance.destroy();
+    }*/
 }

@@ -80,4 +80,17 @@ public class LanguageDialogFragment extends DialogFragment {
         return rootView;
     }
 
+    /**
+     *
+     * @param langCode
+     */
+    public static String getCode(int langCode){
+        switch (langCode) {
+            case LANG_DE:
+                return "de";
+            case LANG_EN:
+                return "en";
+            default: return "en";
+        }
+    }
 }

@@ -10,4 +10,5 @@
     <string name="missing_record_permission">Microfon permission is needed.  Permissions can be organized in the application settings.</string>
     <string name="title_missing_permission">Missing Permission</string>
     <string name="settings">Settings</string>
+    <string name="speech_not_supported">Your device does not support speech input</string>
 </resources>
