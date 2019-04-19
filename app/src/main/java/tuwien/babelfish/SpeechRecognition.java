@@ -46,7 +46,8 @@ import tuwien.babelfish.speech.SpeechService;
  */
 public class SpeechRecognition extends Fragment implements SpeechService {
 
-    private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 5;
+    private static final int REQUEST_RECORD_AUDIO = 5;
+    private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 15;
     private boolean allowRecording = false;
 
     private EditText et_speech_input;
@@ -101,8 +102,7 @@ public class SpeechRecognition extends Fragment implements SpeechService {
             } else {
                 // No explanation needed; request the permission
                 ActivityCompat.requestPermissions(getActivity(),
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
+                        new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
 
                 // MY_PERMISSIONS_REQUEST_XXX is an app-defined int constant.
                 // The callback method gets the result of the request.
@@ -163,7 +163,7 @@ public class SpeechRecognition extends Fragment implements SpeechService {
                                            String[] permissions, int[] grantResults) {
 
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_RECORD_AUDIO: {
+            case REQUEST_RECORD_AUDIO: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
