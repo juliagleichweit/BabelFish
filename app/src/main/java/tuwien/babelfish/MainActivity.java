@@ -52,7 +52,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         // add custom toolbar
         Toolbar myToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
-
     }
 
 
@@ -111,14 +110,17 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         //MenuItem menu_lang = optionsMenu.findItem(R.id.action_lang);
         lastLang = langCode;
 
+        //set correct source language
+        AndroidSpeechService.getInstance().setLangPreference(LanguageDialogFragment.getOppositeCode(langCode));
         if(langPrefMenu !=null) {
             switch (langCode) {
                 case LanguageDialogFragment.LANG_DE:
-                    langPrefMenu.setIcon(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.de));
+                    langPrefMenu.setIcon(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.en_to_de));
                     langPrefMenu.setVisible(true);
+
                     break;
                 case LanguageDialogFragment.LANG_EN:
-                    langPrefMenu.setIcon(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.en));
+                    langPrefMenu.setIcon(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.de_to_en));
                     langPrefMenu.setVisible(true);
                     break;
                 default:
@@ -161,22 +163,21 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
             editor.apply();
 
             updateLangIcon(langCode);
-            AndroidSpeechService.getInstance().setLangPreference(LanguageDialogFragment.getCode(langCode));
         }
     }
 
-   /* @Override
+  @Override
     public void onStop() {
         super.onStop();
-        endSpeechService();
+        //endSpeechService();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        endSpeechService();
+       // endSpeechService();
     }
-
+  /*
     private void endSpeechService(){
         AndroidSpeechService.getInstance().stopListening(true);
         AndroidSpeechService instance = AndroidSpeechService.getInstance();

@@ -18,6 +18,7 @@
 
 package tuwien.babelfish.speech;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -25,9 +26,18 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+import tuwien.babelfish.CheckConnection;
+import tuwien.babelfish.LanguageDialogFragment;
 import tuwien.babelfish.R;
 import tuwien.babelfish.SpeechRecognition;
 
@@ -35,20 +45,21 @@ import tuwien.babelfish.SpeechRecognition;
  *  Implements the standard API SpeechRecognizer to convert speech to text
  *  Implementing RecognitionListener suppresses the Google Dialog
  */
-public class AndroidSpeechService implements RecognitionListener {
+public class AndroidSpeechService implements RecognitionListener, Response.Listener<JSONObject>, Response.ErrorListener {
 
     public static final String TAG = "AndroidSpeechService";
     private static AndroidSpeechService instance;
 
     private final int REQUEST_SPEECH_RECOGNIZER = 10;
 
-    private String langCode = "en";
+    private int langCode = LanguageDialogFragment.LANG_EN;
     private SpeechRecognizer speechRecognizer;
     private Intent speechRecognitionIntent;
     private boolean listening = false;
 
     private SpeechRecognition callingActivity;
-
+    private Context ctx;
+    private TranslationService translationService;
 
     private AndroidSpeechService() {
 
@@ -73,7 +84,7 @@ public class AndroidSpeechService implements RecognitionListener {
      * Adds language preference to SpeechRecognizer to improve results
      * @param langCode {@link tuwien.babelfish.LanguageDialogFragment}
      */
-    public void setLangPreference(String langCode){
+    public void setLangPreference(int langCode){
         this.langCode = langCode;
 
         if(speechRecognizer != null) {
@@ -89,6 +100,7 @@ public class AndroidSpeechService implements RecognitionListener {
      */
     public void startSpeechService(SpeechRecognition activity){
         callingActivity = activity;
+        ctx = callingActivity.getActivity().getApplicationContext();
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, callingActivity.getActivity().getPackageName());
 
         restartService();
@@ -114,6 +126,20 @@ public class AndroidSpeechService implements RecognitionListener {
         }
     }
 
+    private void translate(String word){
+
+        if(!CheckConnection.isOnline(ctx)){
+            // make toast
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(ctx,  "No Internet connection", duration);
+            toast.show();
+        }else{
+            String from = LanguageDialogFragment.getCode(langCode);
+            String to = LanguageDialogFragment.getCode(LanguageDialogFragment.getOppositeCode(langCode));
+            TranslationService.getInstance(ctx).translate(word, from,to,this,this);
+        }
+    }
 
     public void restartListening(){
         if(speechRecognizer == null) {
@@ -156,7 +182,7 @@ public class AndroidSpeechService implements RecognitionListener {
 
     @Override
     public void onBeginningOfSpeech() {
-        Log.d(TAG, "onBeginningOfSpeech");
+        //Log.d(TAG, "onBeginningOfSpeech");
     }
 
     @Override
@@ -166,7 +192,7 @@ public class AndroidSpeechService implements RecognitionListener {
 
     @Override
     public void onBufferReceived(byte[] bytes) {
-        Log.d(TAG, "onBufferReceived");
+        //Log.d(TAG, "onBufferReceived");
     }
 
     @Override
@@ -195,14 +221,17 @@ public class AndroidSpeechService implements RecognitionListener {
         ArrayList data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
         //results have been found
-        if(data != null) {
+       /* if(data != null) {
             // display all results
             String word = (String) data.get(data.size() - 1);
-            setViewText(callingActivity.getTranslationView(), word);
+            setViewText(callingActivity.getSpokenView(), word);
 
+            translate(word);
         }else{ // no matching results found
             Log.d(TAG, "No results");
-        }
+        }*/
+       String text  = callingActivity.getSpokenView().getText().toString();
+       translate(text);
     }
 
     @Override
@@ -236,4 +265,36 @@ public class AndroidSpeechService implements RecognitionListener {
         if(v != null)
             v.setText(msg);
     }
+
+    /**
+     * Called when a response is received.
+     *
+     * @param response
+     */
+    @Override
+    public void onResponse(JSONObject response) {
+        String translation;
+
+        try {
+            translation = response.getString("translation");
+            callingActivity.getTranslationView().setText(translation);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callingActivity.getTranslationView().setText(R.string.error_translation);
+        }
+
+    }
+
+
+    /**
+     * Callback method that an error has been occurred with the provided error code and optional
+     * user-readable message.
+     *
+     * @param error
+     */
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        callingActivity.getTranslationView().setText(error.getCause().getMessage());
+    }
+
 }

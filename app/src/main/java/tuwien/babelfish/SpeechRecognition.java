@@ -40,6 +40,7 @@ import android.widget.Toast;
 
 import tuwien.babelfish.speech.AndroidSpeechService;
 import tuwien.babelfish.speech.SpeechService;
+import tuwien.babelfish.speech.TranslationService;
 
 /**
  * Fragment used to record speech and convert it to text
@@ -47,8 +48,7 @@ import tuwien.babelfish.speech.SpeechService;
 public class SpeechRecognition extends Fragment implements SpeechService {
 
     private static final int REQUEST_RECORD_AUDIO = 5;
-    private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 15;
-    private boolean allowRecording = false;
+     private boolean allowRecording = false;
 
     private EditText et_speech_input;
     private EditText et_translation;
@@ -58,7 +58,6 @@ public class SpeechRecognition extends Fragment implements SpeechService {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.speech_process, container, false);
 
-        //allowRecording = permissionCheck();
         ImageView microfon_icon = rootView.findViewById(R.id.record_button);
         microfon_icon.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,7 +68,6 @@ public class SpeechRecognition extends Fragment implements SpeechService {
 
         et_speech_input = rootView.findViewById(R.id.et_spoken_text);
         et_translation = rootView.findViewById(R.id.et_translated_text);
-
         return rootView;
     }
 
@@ -80,6 +78,7 @@ public class SpeechRecognition extends Fragment implements SpeechService {
     public EditText getTranslationView() {
         return et_translation;
     }
+
 
     /**
      * Checks if permissions RECORD_AUDIO is given
@@ -194,12 +193,6 @@ public class SpeechRecognition extends Fragment implements SpeechService {
         if (!allowRecording && !permissionCheck())
             return;
 
-        /*Context context = getActivity().getApplicationContext();
-        int duration = Toast.LENGTH_SHORT;
-
-        Toast toast = Toast.makeText(context, view.getContentDescription(), duration);
-        toast.show();*/
-
         clearEditText();
 
         // start service on first click
@@ -227,6 +220,7 @@ public class SpeechRecognition extends Fragment implements SpeechService {
     public void onStop() {
         super.onStop();
         endSpeechService();
+        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
         Log.d(AndroidSpeechService.TAG, "onStop SpeechRecognition");
     }
 

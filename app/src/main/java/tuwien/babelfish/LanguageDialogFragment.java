@@ -81,7 +81,9 @@ public class LanguageDialogFragment extends DialogFragment {
     }
 
     /**
-     *
+     * Returns the String representation of the language code
+     * 1 - de
+     * 2 - en
      * @param langCode
      */
     public static String getCode(int langCode){
@@ -93,4 +95,20 @@ public class LanguageDialogFragment extends DialogFragment {
             default: return "en";
         }
     }
+
+    /**
+     * Returns the String representation of the opposite language code
+     * 1 - de
+     * 2 - en
+     * @param langCode
+     */
+    public static int getOppositeCode(int langCode){
+        switch (langCode) {
+            case LANG_DE:
+                return LANG_EN;
+            case LANG_EN:
+                return LANG_DE;
+            default: return  LANG_DE;
+        }
+        }
 }

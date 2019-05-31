@@ -16,7 +16,8 @@
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:gravity="start"
-        android:inputType="none|textNoSuggestions"
+        android:inputType="textMultiLine|textNoSuggestions"
+        android:scrollbars="vertical"
         android:focusableInTouchMode="false"
         app:layout_constraintBottom_toTopOf="@id/et_translated_text"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,8 +35,9 @@
         android:layout_marginRight="16dp"
         android:layout_marginBottom="16dp"
         android:gravity="start"
-        android:inputType="none|textNoSuggestions"
+        android:inputType="textMultiLine|textNoSuggestions"
         android:focusableInTouchMode="false"
+        android:scrollbars="vertical"
         app:layout_constraintBottom_toTopOf="@+id/record_button"
         app:layout_constraintEnd_toEndOf="@id/et_spoken_text"
         app:layout_constraintStart_toStartOf="@id/et_spoken_text"
@@ -53,5 +55,6 @@
         android:contentDescription="@string/record_content_descr"
         app:srcCompat="@drawable/microphone"
         />
+
 </android.support.constraint.ConstraintLayout>
 
