@@ -28,27 +28,20 @@ import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 
 import tuwien.babelfish.CheckConnection;
 import tuwien.babelfish.LanguageDialogFragment;
 import tuwien.babelfish.R;
-import tuwien.babelfish.SpeechRecognition;
 
 /**
  *  Implements the standard API SpeechRecognizer to convert speech to text
  *  Implementing RecognitionListener suppresses the Google Dialog
  */
-public class AndroidSpeechService implements RecognitionListener, Response.Listener<JSONObject>, Response.ErrorListener {
+public class AndroidSpeechRecognition implements RecognitionListener {
 
-    public static final String TAG = "AndroidSpeechService";
-    private static AndroidSpeechService instance;
+    public static final String TAG = "AndroidSpeechRec";
+    private static AndroidSpeechRecognition instance;
 
     private final int REQUEST_SPEECH_RECOGNIZER = 10;
 
@@ -57,11 +50,10 @@ public class AndroidSpeechService implements RecognitionListener, Response.Liste
     private Intent speechRecognitionIntent;
     private boolean listening = false;
 
-    private SpeechRecognition callingActivity;
+    private SpeechService callingActivity;
     private Context ctx;
-    private TranslationService translationService;
 
-    private AndroidSpeechService() {
+    private AndroidSpeechRecognition() {
 
         speechRecognitionIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
 
@@ -71,11 +63,12 @@ public class AndroidSpeechService implements RecognitionListener, Response.Liste
 
         // allow partial results to give instant feedback
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+
     }
 
-    public static AndroidSpeechService getInstance(){
+    public static AndroidSpeechRecognition getInstance(){
         if(instance==null)
-            instance = new AndroidSpeechService();
+            instance = new AndroidSpeechRecognition();
 
         return instance;
     }
@@ -95,10 +88,17 @@ public class AndroidSpeechService implements RecognitionListener, Response.Liste
     }
 
     /**
-     * Starts speech recognition service via Intent
-     * @param activity calling activity, must implement {@link tuwien.babelfish.speech.SpeechService}
+     * Returns the current used language code of the SpeechRecognizer (i.e. spoken language)s
+     * @return
      */
-    public void startSpeechService(SpeechRecognition activity){
+    public int getLangCode(){
+        return this.langCode;
+    }
+    /**
+     * Starts speech recognition service via Intent
+     * @param activity calling activity
+     */
+    public void startSpeechService(SpeechService activity){
         callingActivity = activity;
         ctx = callingActivity.getActivity().getApplicationContext();
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, callingActivity.getActivity().getPackageName());
@@ -137,7 +137,7 @@ public class AndroidSpeechService implements RecognitionListener, Response.Liste
         }else{
             String from = LanguageDialogFragment.getCode(langCode);
             String to = LanguageDialogFragment.getCode(LanguageDialogFragment.getOppositeCode(langCode));
-            TranslationService.getInstance(ctx).translate(word, from,to,this,this);
+            TranslationService.getInstance(ctx).translate(word, from,to,callingActivity,callingActivity);
         }
     }
 
@@ -168,8 +168,8 @@ public class AndroidSpeechService implements RecognitionListener, Response.Liste
             }
     }
 
-    public void destroy(){
-        Log.d(TAG, "destry AndroidSpeechService");
+    public void shutdownService(){
+        Log.d(TAG, "shutdown AndroidSpeechRecognition");
         if(speechRecognizer != null)
             speechRecognizer.destroy();
     }
@@ -266,35 +266,5 @@ public class AndroidSpeechService implements RecognitionListener, Response.Liste
             v.setText(msg);
     }
 
-    /**
-     * Called when a response is received.
-     *
-     * @param response
-     */
-    @Override
-    public void onResponse(JSONObject response) {
-        String translation;
-
-        try {
-            translation = response.getString("translation");
-            callingActivity.getTranslationView().setText(translation);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callingActivity.getTranslationView().setText(R.string.error_translation);
-        }
-
-    }
-
-
-    /**
-     * Callback method that an error has been occurred with the provided error code and optional
-     * user-readable message.
-     *
-     * @param error
-     */
-    @Override
-    public void onErrorResponse(VolleyError error) {
-        callingActivity.getTranslationView().setText(error.getCause().getMessage());
-    }
 
 }

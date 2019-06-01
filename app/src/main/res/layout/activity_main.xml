@@ -25,7 +25,7 @@
 
         <fragment
             android:id="@+id/fragment_voice_rec"
-            android:name="tuwien.babelfish.SpeechRecognition"
+            android:name="tuwien.babelfish.speech.SpeechService"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:layout="@layout/speech_process" />

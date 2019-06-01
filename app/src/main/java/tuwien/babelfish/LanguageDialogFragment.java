@@ -25,14 +25,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import java.util.Locale;
+
 /**
  * Fragment used to edit target language preferences
  */
 public class LanguageDialogFragment extends DialogFragment {
-
-    static LanguageDialogFragment newInstance() {
-        return new LanguageDialogFragment();
-    }
 
     OnLanguageSelectedListener callback;
 
@@ -93,6 +91,20 @@ public class LanguageDialogFragment extends DialogFragment {
             case LANG_EN:
                 return "en";
             default: return "en";
+        }
+    }
+
+    /**
+     * Returns the Locale of the language code*
+     * @param langCode
+     */
+    public static Locale getLocale(int langCode){
+        switch (langCode) {
+            case LANG_DE:
+                return Locale.GERMAN;
+            case LANG_EN:
+                return Locale.ENGLISH;
+            default: return Locale.ENGLISH;
         }
     }
 

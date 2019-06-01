@@ -29,9 +29,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-import android.widget.Toast;
 
-import tuwien.babelfish.speech.AndroidSpeechService;
+import tuwien.babelfish.speech.AndroidSpeechRecognition;
 
 /**
  * This is used to launch speacch processing activities
@@ -74,10 +73,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
             langDiaFrag.setOnLanguageSelectedListener(this);
         }
 
-        if(fragment instanceof SpeechRecognition){
-
-        }
-
     }
 
     @Override
@@ -111,7 +106,8 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         lastLang = langCode;
 
         //set correct source language
-        AndroidSpeechService.getInstance().setLangPreference(LanguageDialogFragment.getOppositeCode(langCode));
+        AndroidSpeechRecognition.getInstance().setLangPreference(LanguageDialogFragment.getOppositeCode(langCode));
+
         if(langPrefMenu !=null) {
             switch (langCode) {
                 case LanguageDialogFragment.LANG_DE:
@@ -149,10 +145,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
     @Override
     public void onSelectedLanguage(int langCode) {
         Context context = getApplicationContext();
-        int duration = Toast.LENGTH_SHORT;
-
-        Toast toast = Toast.makeText(context, langCode == 1 ? "Deutsch": "Englisch", duration);
-        toast.show();
 
         //only consume real preference changes
         if(lastLang!=langCode) {
@@ -179,8 +171,8 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
     }
   /*
     private void endSpeechService(){
-        AndroidSpeechService.getInstance().stopListening(true);
-        AndroidSpeechService instance = AndroidSpeechService.getInstance();
+        AndroidSpeechRecognition.getInstance().stopListening(true);
+        AndroidSpeechRecognition instance = AndroidSpeechRecognition.getInstance();
         instance.stopListening(true);
         instance.destroy();
     }*/
