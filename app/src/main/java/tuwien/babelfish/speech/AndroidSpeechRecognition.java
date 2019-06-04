@@ -126,7 +126,14 @@ public class AndroidSpeechRecognition implements RecognitionListener {
         }
     }
 
-    private void translate(String word){
+    /**
+     * Calls TranslationService to translate the text to current target language
+     * @param text to be translated
+     */
+    private void translate(String text){
+        // do we got text to translate
+        if(text == null || text.isEmpty())
+            return;
 
         if(!CheckConnection.isOnline(ctx)){
             // make toast
@@ -137,7 +144,7 @@ public class AndroidSpeechRecognition implements RecognitionListener {
         }else{
             String from = LanguageDialogFragment.getCode(langCode);
             String to = LanguageDialogFragment.getCode(LanguageDialogFragment.getOppositeCode(langCode));
-            TranslationService.getInstance(ctx).translate(word, from,to,callingActivity,callingActivity);
+            TranslationService.getInstance(ctx).translate(text, from,to,callingActivity,callingActivity);
         }
     }
 
@@ -168,6 +175,9 @@ public class AndroidSpeechRecognition implements RecognitionListener {
             }
     }
 
+    /**
+     * Shuts down SpeechRecognizer
+     */
     public void shutdownService(){
         Log.d(TAG, "shutdown AndroidSpeechRecognition");
         if(speechRecognizer != null)

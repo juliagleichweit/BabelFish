@@ -11,6 +11,9 @@
     <string name="title_missing_permission">Missing Permission</string>
     <string name="settings">Settings</string>
     <string name="speech_not_supported">Your device does not support speech input</string>
-    <string name="error_translation">Translation error</string>
+    <string name="error_translation">Translation Error</string>
     <string name="error_no_network">No internet connection</string>
+    <string name="bt_title_start">Enable bluetooth</string>
+    <string name="bt_title_scanning">"Available Devices "</string>
+    <string name="bt_title_connect">Connect..</string>
 </resources>

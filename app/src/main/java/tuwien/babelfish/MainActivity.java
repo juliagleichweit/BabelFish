@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
     private Menu optionsMenu;
     private MenuItem langPrefMenu;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         {
             FragmentManager fm = getFragmentManager();
             LanguageDialogFragment dialogFragment = new LanguageDialogFragment();
-            dialogFragment.show(fm, "Sample Fragment");
+            dialogFragment.show(fm, "LanguageDialogFragment");
         }
         updateLangIcon(lang);
     }

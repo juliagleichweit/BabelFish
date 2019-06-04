@@ -19,8 +19,11 @@
 package tuwien.babelfish.speech;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -32,6 +35,7 @@ import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,10 +51,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Locale;
+import java.util.Set;
 
 import tuwien.babelfish.CheckConnection;
 import tuwien.babelfish.LanguageDialogFragment;
 import tuwien.babelfish.R;
+import tuwien.babelfish.bluetooth.BluetoothConnectionService;
 
 /**
  * Fragment used to implement the translation pipeline (speech-to-text -> translation -> text-to-speech)
@@ -58,6 +64,7 @@ import tuwien.babelfish.R;
 public class SpeechService extends Fragment implements Response.Listener<JSONObject>, Response.ErrorListener {
 
     private static final int REQUEST_RECORD_AUDIO = 5;
+    private static final int REQUEST_ENABLE_BLUETOOTH = 10;
     private boolean allowRecording = false;
 
     private EditText et_speech_input;
@@ -65,25 +72,33 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private ImageView iv_bot;
 
     private boolean startListening = false;
-    private TextToSpeech textToSpeech;
     private boolean initialised = false;
     private int lastLangCode;
+
+    private TextToSpeech textToSpeech;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothConnectionService btService;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.speech_process, container, false);
 
         ImageView microfon_icon = rootView.findViewById(R.id.record_button);
-        microfon_icon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickMicrofon(view);
-            }
-        });
+        microfon_icon.setOnClickListener(view -> onClickMicrofon(view));
 
         et_speech_input = rootView.findViewById(R.id.et_spoken_text);
         et_translation = rootView.findViewById(R.id.et_translated_text);
         iv_bot = rootView.findViewById(R.id.bot);
+
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            // Device doesn't support Bluetooth
+            iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), R.drawable.bot_grey));
+        }
+
+        iv_bot.setOnClickListener(view ->onClickConnect(view));
+        // initialize TextToSpeech
         textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
@@ -211,6 +226,21 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     }
 
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // Check which request we're responding to
+        if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
+            // Make sure the request was successful
+            if (resultCode == Activity.RESULT_OK) {
+                // The user enabled bluetooth.
+                Toast.makeText(getActivity().getApplicationContext(), "Bluetooth turned on", Toast.LENGTH_SHORT).show();
+            }
+            else
+                Toast.makeText(getActivity().getApplicationContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /**
      * Re-/Starts the speech recognition service
      *
@@ -242,6 +272,24 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     }
 
     /**
+     * Starts the discovery/connection process for a second device
+     * @param view
+     */
+    private void onClickConnect(View view) {
+        if(btService == null){
+            btService = new BluetoothConnectionService((AppCompatActivity) getActivity());
+        }
+
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLUETOOTH);
+        }else{
+                btService.showDialog();
+
+        }
+    }
+
+    /**
      * Remove any text in the EditText views
      */
     private void clearEditText() {
@@ -252,42 +300,9 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             et_translation.setText(null);
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        endSpeechService();
-        textToSpeech.stop();
-        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
-        Log.d(AndroidSpeechRecognition.TAG, "onStop SpeechRecognition");
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        endSpeechService();
-        textToSpeech.stop();
-        Log.d(AndroidSpeechRecognition.TAG, "onPause SpeechRecognition");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        endSpeechService();
-        textToSpeech.shutdown();
-        Log.d(AndroidSpeechRecognition.TAG, "onDestroy SpeechRecognition");
-    }
 
     /**
-     * Stop Listening and destroy SpeechService object
-     */
-    private void endSpeechService() {
-        AndroidSpeechRecognition.getInstance().stopListening(true);
-        AndroidSpeechRecognition.getInstance().shutdownService();
-        startListening = false;
-    }
-
-    /**
-     * Called when a response is received.
+     * Called when a response from the TranslationService is received.
      *
      * @param response
      */
@@ -306,6 +321,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             getTranslationView().setText(R.string.error_translation);
         }
 
+
     }
 
     /**
@@ -316,7 +332,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         if(initialised) {
             // language spoken
             int currLang = AndroidSpeechRecognition.getInstance().getLangCode();
-            // langauge translated to
+            // language translated to
             currLang = LanguageDialogFragment.getOppositeCode(currLang);
             if(lastLangCode!=currLang) {
                 textToSpeech.setLanguage(LanguageDialogFragment.getLocale(currLang));
@@ -332,7 +348,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         }
     }
 
-
     /**
      * Callback method that an error has been occurred with the provided error code and optional
      * user-readable message.
@@ -344,4 +359,43 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         getTranslationView().setText(error.getCause().getMessage());
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        endSpeechService();
+        if(textToSpeech != null)
+            textToSpeech.stop();
+        if(btService != null)
+            btService.stop();
+        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
+        Log.d(AndroidSpeechRecognition.TAG, "onStop SpeechRecognition");
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        endSpeechService();
+        textToSpeech.stop();
+        Log.d(AndroidSpeechRecognition.TAG, "onPause SpeechRecognition");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        endSpeechService();
+        if(textToSpeech != null)
+            textToSpeech.shutdown();
+        if(btService != null)
+            btService.shutdown();
+        Log.d(AndroidSpeechRecognition.TAG, "onDestroy SpeechRecognition");
+    }
+
+    /**
+     * Stop Listening and destroy SpeechService object
+     */
+    private void endSpeechService() {
+        AndroidSpeechRecognition.getInstance().stopListening(true);
+        AndroidSpeechRecognition.getInstance().shutdownService();
+        startListening = false;
+    }
 }

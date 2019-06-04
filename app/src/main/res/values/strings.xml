@@ -13,4 +13,7 @@
     <string name="speech_not_supported">Ihr Gerät unterstützt keine Spracheingabe</string>
     <string name="error_translation">Fehler bei der Übersetzung</string>
     <string name="error_no_network">"Keine Internetverbindung "</string>
+    <string name="bt_title_start">Schalte Bluetooth ein</string>
+    <string name="bt_title_scanning">Verfügbare Geräte</string>
+    <string name="bt_title_connect">Verbinde...</string>
 </resources>

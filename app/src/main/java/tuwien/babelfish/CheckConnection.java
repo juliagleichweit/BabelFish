@@ -21,6 +21,9 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+/**
+ * Utility class to check working internet connection
+ */
 public class CheckConnection {
 
     public static boolean isOnline(Context ctx) {
