@@ -13,7 +13,11 @@
     <string name="speech_not_supported">Your device does not support speech input</string>
     <string name="error_translation">Translation Error</string>
     <string name="error_no_network">No internet connection</string>
-    <string name="bt_title_start">Enable bluetooth</string>
     <string name="bt_title_scanning">"Available Devices "</string>
     <string name="bt_title_connect">Connect..</string>
+    <string name="missing_location_permission">Location permission is needed.  Permissions can be organized in the application settings.</string>
+    <string name="no_name">No Name</string>
+    <string name="bt_not_supported">Your device does not support Bluetooth</string>
+    <string name="bt_end_connection">Closed connection</string>
+    <string name="bt_error_connect">Could not connect.</string>
 </resources>

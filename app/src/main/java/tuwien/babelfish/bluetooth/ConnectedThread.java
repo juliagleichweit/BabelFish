@@ -40,7 +40,6 @@ class ConnectedThread extends Thread {
 
     public ConnectedThread(BluetoothSocket socket) {
         Log.d(TAG, "ConnectedThread: Starting.");
-        ProgressBar bar = new ProgressBar(null);
         this.socket = socket;
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
@@ -62,6 +61,7 @@ class ConnectedThread extends Thread {
 
         inputStream = tmpIn;
         outputStream = tmpOut;
+        BluetoothConnectionService.getInstance(null).addConnection(this);
     }
 
     public void run(){
@@ -75,6 +75,7 @@ class ConnectedThread extends Thread {
             try {
                 bytes = inputStream.read(buffer);
                 String incomingMessage = new String(buffer, 0, bytes);
+                BluetoothConnectionService.getInstance(null).callback.readInput(incomingMessage);
                 Log.d(TAG, "InputStream: " + incomingMessage);
             } catch (IOException e) {
                 Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage() );
@@ -95,8 +96,13 @@ class ConnectedThread extends Thread {
     }
 
     /* Call this from the main activity to shutdown the connection */
-    public void cancel() {
+    public void close() {
         try {
+            if(inputStream != null)
+                inputStream.close();
+            if(outputStream != null)
+                outputStream.close();
+
             socket.close();
         } catch (IOException e) { }
     }

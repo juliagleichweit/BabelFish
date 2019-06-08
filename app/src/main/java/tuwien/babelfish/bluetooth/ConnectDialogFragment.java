@@ -17,6 +17,7 @@
  */
 package tuwien.babelfish.bluetooth;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -25,42 +26,33 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.List;
+import java.util.Set;
 
 import tuwien.babelfish.R;
 
 /**
  * Fragment used to guide bluetooth connection process
  */
-public class ConnectDialogFragment extends DialogFragment {
+public class ConnectDialogFragment extends DialogFragment implements AdapterView.OnItemClickListener {
 
-    OnDeviceSelectedListener callback;
+    private static final String TAG = "ConnectdialogFragement";
 
     private TextView tv_title;
     private ListView lv_devices;
     private ProgressBar progressBar;
 
-    private ArrayList<String> devices;
+    private ArrayList<BluetoothDevice> devices;
     private DeviceListAdapter listAdapter;
     public AppCompatActivity activity;
+    private BluetoothAdapter bluetoothAdapter;
 
-    public void setOnDeviceSelectedListener(AppCompatActivity activity){
-        callback = (OnDeviceSelectedListener) activity;
-    }
-
-    //Container Activity must implement this interface
-    //used to pass messages from fragment to containing UI
-    public interface OnDeviceSelectedListener{
-        void onSelectedDevice(UUID device);
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -70,25 +62,38 @@ public class ConnectDialogFragment extends DialogFragment {
         tv_title = rootView.findViewById(R.id.tv_bt_title);
         lv_devices = rootView.findViewById(R.id.lv_devices);
 
-        setTitle(R.string.bt_title_start);
+        setTitle(R.string.bt_title_scanning);
 
-        lv_devices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Toast.makeText(getActivity().getApplicationContext(), "Clicked on " + devices.get(position), Toast.LENGTH_SHORT).show();
-                dismiss();
-            }
-        });
+        lv_devices.setOnItemClickListener(this);
 
+        //set up bluetooth
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         devices = new ArrayList<>();
-        devices.add("Bang Chan");
-        devices.add("Hwang Hyunjin");
-        devices.add("Lee Felix");
-        devices.add("Lee Minho");
-
         listAdapter = new DeviceListAdapter(getActivity().getApplicationContext(), devices);
         lv_devices.setAdapter(listAdapter);
+
+        // add already bonded devices
+        addPairedDevices(devices);
+
+        // start discovery
+        if(bluetoothAdapter.isDiscovering())
+            bluetoothAdapter.cancelDiscovery();
+
+        bluetoothAdapter.startDiscovery();
         return rootView;
+    }
+
+    private void addPairedDevices(List<BluetoothDevice> list){
+        if(bluetoothAdapter != null){
+            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+
+            if(bondedDevices != null){
+                for(BluetoothDevice d : bondedDevices){
+                    list.add(d);
+                }
+            }
+            listAdapter.notifyDataSetChanged();
+        }
     }
 
     public void setTitle(int title){
@@ -96,7 +101,7 @@ public class ConnectDialogFragment extends DialogFragment {
     }
 
     public void addDevice(BluetoothDevice device){
-        //devices.add(device);
+        devices.add(device);
         // notify listview of new data
         listAdapter.notifyDataSetChanged();
     }
@@ -104,10 +109,20 @@ public class ConnectDialogFragment extends DialogFragment {
     public void showDialog(){
         try {
             this.show(activity.getSupportFragmentManager(), "ConnectDialogFragment");
+            BluetoothConnectionService.getInstance(activity).start();
         }catch (RuntimeException e){
             e.printStackTrace();
         }
     }
 
 
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+        //Toast.makeText(activity.getApplicationContext(), "Clicked on " + devices.get(position).getName(), Toast.LENGTH_SHORT).show();
+        bluetoothAdapter.cancelDiscovery();
+
+        // start connection to remote device -> init pairing if not done?
+        BluetoothConnectionService.getInstance(activity).startClient(devices.get(position), BluetoothConnectionService.MY_UUID);
+        setTitle(R.string.bt_title_connect);
+    }
 }

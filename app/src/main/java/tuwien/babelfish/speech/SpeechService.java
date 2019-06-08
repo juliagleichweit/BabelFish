@@ -61,10 +61,12 @@ import tuwien.babelfish.bluetooth.BluetoothConnectionService;
 /**
  * Fragment used to implement the translation pipeline (speech-to-text -> translation -> text-to-speech)
  */
-public class SpeechService extends Fragment implements Response.Listener<JSONObject>, Response.ErrorListener {
+public class SpeechService extends Fragment implements Response.Listener<JSONObject>, Response.ErrorListener, BluetoothConnectionService.OnInputListener {
 
     private static final int REQUEST_RECORD_AUDIO = 5;
-    private static final int REQUEST_ENABLE_BLUETOOTH = 10;
+    private static final int REQUEST_COARSE_LOCATION = 10;
+    private static final int REQUEST_ENABLE_BLUETOOTH = 15;
+
     private boolean allowRecording = false;
 
     private EditText et_speech_input;
@@ -79,6 +81,9 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothConnectionService btService;
 
+    private boolean allowDiscovery = false;
+    private boolean lastIconState = false;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.speech_process, container, false);
@@ -91,25 +96,25 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         iv_bot = rootView.findViewById(R.id.bot);
 
 
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        bluetoothAdapter = bluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             // Device doesn't support Bluetooth
-            iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), R.drawable.bot_grey));
-        }
-
-        iv_bot.setOnClickListener(view ->onClickConnect(view));
-        // initialize TextToSpeech
-        textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                   initialised = true;
-                } else {
-                    Toast.makeText(getActivity().getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
+            changeIcon(false);
+            Toast.makeText(getActivity().getApplicationContext(), R.string.bt_not_supported, Toast.LENGTH_SHORT);
+        }else {
+            iv_bot.setOnClickListener(view -> onClickConnect(view));
+            // initialize TextToSpeech
+            textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if (status == TextToSpeech.SUCCESS) {
+                        initialised = true;
+                    } else {
+                        Toast.makeText(getActivity().getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
-        });
-
+            });
+        }
         return rootView;
     }
 
@@ -127,24 +132,47 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      *
      * @return true if permission granted; otherwise false
      */
-    public boolean permissionCheck() {
+    public boolean audioPermissionCheck() {
 
-        // Here, thisActivity is the current activity
+        String msg = getActivity().getResources().getString(R.string.missing_record_permission);
+        return checkPermission(Manifest.permission.RECORD_AUDIO, msg, REQUEST_RECORD_AUDIO);
+    }
+
+        /**
+     * Checks if permissions ACCES_COARSE_LOCATION or ACCESS_FINE_LOCATION is given
+     *
+     * @return true if permission granted; otherwise false
+     */
+    public boolean locationPermissionCheck() {
+
+        String msg = getActivity().getResources().getString(R.string.missing_location_permission);
+        return checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, msg, REQUEST_COARSE_LOCATION);
+    }
+
+    /**
+     * Checks if the permission is granted. If not pops up dialog with additional info
+     * @param permission permission code
+     * @param msg to be displayed in the permission dialog
+     * @param requestCode integer identifying your request
+     * @return true if granted, otherwise false
+     */
+    private boolean checkPermission(String permission, String msg, int requestCode){
+
         if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
-                Manifest.permission.RECORD_AUDIO)
+               permission)
                 != PackageManager.PERMISSION_GRANTED) {
 
             // Permission is not granted
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
-                    Manifest.permission.RECORD_AUDIO)) {
+                    permission)) {
                 // returns true if the user has previously denied the request, and returns
                 // false if a user has denied a permission and selected the Don't ask again option
-                showPermissionInfoDialog();
+                showPermissionInfoDialog(msg);
             } else {
                 // No explanation needed; request the permission
                 ActivityCompat.requestPermissions(getActivity(),
-                        new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+                        new String[]{permission}, requestCode);
 
                 // MY_PERMISSIONS_REQUEST_XXX is an app-defined int constant.
                 // The callback method gets the result of the request.
@@ -152,7 +180,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             }
         } else {
             // Permission has already been granted
-            //microfon_icon.setImageDrawable(getResources().getDrawable(R.drawable.microphone));
             return true;
         }
         return false;
@@ -161,10 +188,10 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     /**
      * Inform user of needed permission and  give shortcut to settings menu
      */
-    private void showPermissionInfoDialog() {
+    private void showPermissionInfoDialog(String msg) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.title_missing_permission);
-        builder.setMessage(R.string.missing_record_permission);
+        builder.setMessage(msg);
         builder.setCancelable(true);
 
         // on ok go to settings page
@@ -218,6 +245,17 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
                 }
                 return;
             }
+            case REQUEST_COARSE_LOCATION:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                    allowDiscovery = true;
+
+                } else {
+                    // permission denied.
+                    allowRecording = false;
+                }
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
                 // other 'case' lines to check for other
@@ -234,10 +272,11 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             // Make sure the request was successful
             if (resultCode == Activity.RESULT_OK) {
                 // The user enabled bluetooth.
-                Toast.makeText(getActivity().getApplicationContext(), "Bluetooth turned on", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getActivity().getApplicationContext(), "Bluetooth turned on", Toast.LENGTH_SHORT).show();
             }
-            else
-                Toast.makeText(getActivity().getApplicationContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT).show();
+            else{
+                //Toast.makeText(getActivity().getApplicationContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -248,7 +287,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      */
     public void onClickMicrofon(View view) {
         // permission is either granted at runtime or beforehand
-        if (!allowRecording && !permissionCheck())
+        if (!allowRecording && !audioPermissionCheck())
             return;
 
         clearEditText();
@@ -276,16 +315,25 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      * @param view
      */
     private void onClickConnect(View view) {
+        if(!locationPermissionCheck())
+            return;
+
         if(btService == null){
-            btService = new BluetoothConnectionService((AppCompatActivity) getActivity());
+            btService = BluetoothConnectionService.getInstance((AppCompatActivity) getActivity());
+            btService.setConnectionListener(this);
         }
 
-        if (!bluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLUETOOTH);
-        }else{
+        // do we have a running instance we want to disconnect
+        if(btService.isConnected()){
+            Toast.makeText(getActivity().getApplicationContext(), R.string.bt_end_connection, Toast.LENGTH_SHORT).show();
+        }
+        else { // we want to start a connection
+            if (!bluetoothAdapter.isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLUETOOTH);
+            } else {
                 btService.showDialog();
-
+            }
         }
     }
 
@@ -315,6 +363,9 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             getTranslationView().setText(translation);
 
             speak(translation);
+            if(btService != null && btService.isConnected()){
+                btService.write(translation.getBytes());
+            }
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -328,7 +379,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      *
      * @param sentence
      */
-    private void speak(String sentence){
+    private synchronized void speak(String sentence){
         if(initialised) {
             // language spoken
             int currLang = AndroidSpeechRecognition.getInstance().getLangCode();
@@ -367,7 +418,13 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             textToSpeech.stop();
         if(btService != null)
             btService.stop();
+
         TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
+
+        // sockets are closed automatically
+        if(btService != null)
+            btService.stopClients();
+
         Log.d(AndroidSpeechRecognition.TAG, "onStop SpeechRecognition");
     }
 
@@ -375,7 +432,9 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     public void onPause() {
         super.onPause();
         endSpeechService();
-        textToSpeech.stop();
+        if(textToSpeech != null)
+            textToSpeech.stop();
+
         Log.d(AndroidSpeechRecognition.TAG, "onPause SpeechRecognition");
     }
 
@@ -387,6 +446,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             textToSpeech.shutdown();
         if(btService != null)
             btService.shutdown();
+        if(btService != null)
+            btService.stopClients();
         Log.d(AndroidSpeechRecognition.TAG, "onDestroy SpeechRecognition");
     }
 
@@ -397,5 +458,22 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         AndroidSpeechRecognition.getInstance().stopListening(true);
         AndroidSpeechRecognition.getInstance().shutdownService();
         startListening = false;
+    }
+
+    @Override
+    public void readInput(String input) {
+        getTranslationView().setText(input);
+        speak(input);
+    }
+
+    @Override
+    public void changeIcon(boolean connected) {
+        if(lastIconState == connected)
+            return;
+
+        lastIconState = connected;
+        int drawable = connected ? R.drawable.bot: R.drawable.bot_grey;
+
+        iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), drawable));
     }
 }

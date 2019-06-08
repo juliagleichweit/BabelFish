@@ -73,9 +73,11 @@ class AcceptServerThread extends Thread {
             Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
         }
 
-        //talk about this is in the 3rd
+        // other device connected
         if(socket != null){
             connected(socket);
+        }else{
+            BluetoothConnectionService.getInstance(null).showConnectionError();
         }
 
         Log.i(TAG, "END mAcceptThread ");

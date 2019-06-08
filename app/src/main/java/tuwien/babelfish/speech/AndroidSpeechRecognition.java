@@ -184,6 +184,7 @@ public class AndroidSpeechRecognition implements RecognitionListener {
             speechRecognizer.destroy();
     }
 
+    {}
     @Override
     public void onReadyForSpeech(Bundle bundle) {
         Log.d(TAG, "onReadyForSpeech");

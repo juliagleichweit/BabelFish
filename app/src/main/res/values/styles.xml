@@ -6,6 +6,14 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:listViewStyle">@style/ListViewStyle.Light</item>
+
     </style>
 
+    <style name="ListViewStyle.Light" parent="Widget.AppCompat.ListView">
+         <item name="android:divider">@color/darkGrey</item>
+        <item name="android:dividerHeight">1dp</item>
+         <item name="android:drawSelectorOnTop">false</item>
+        <item name="android:cacheColorHint">#00000000</item>
+    </style>
 </resources>

@@ -79,6 +79,7 @@ class ConnectClientThread extends Thread {
             // Close the socket
             try {
                 socket.close();
+                BluetoothConnectionService.getInstance(null).showConnectionError();
                 Log.d(TAG, "run: Closed Socket.");
             } catch (IOException e1) {
                 Log.e(TAG, "mConnectThread: run: Unable to close connection in socket " + e1.getMessage());

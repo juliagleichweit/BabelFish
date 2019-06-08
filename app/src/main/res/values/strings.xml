@@ -8,12 +8,16 @@
     <string name="voice_rec_status_off">Fehlende Berechtigung zum Aufnehmen</string>
     <string name="record_content_descr">Mikrofonsymbol zum Starten der Aufnahme</string>
     <string name="missing_record_permission">Mikrofon-Berechtigung wird benötigt. Berechtigungen können in den App-Einstellungen angepasst werden.</string>
+    <string name="missing_location_permission">Standort-Berechtigung wird benötigt. Berechtigungen können in den App-Einstellungen angepasst werden.</string>
     <string name="title_missing_permission">Fehlende Berechtigung</string>
     <string name="settings">Einstellungen</string>
     <string name="speech_not_supported">Ihr Gerät unterstützt keine Spracheingabe</string>
     <string name="error_translation">Fehler bei der Übersetzung</string>
     <string name="error_no_network">"Keine Internetverbindung "</string>
-    <string name="bt_title_start">Schalte Bluetooth ein</string>
     <string name="bt_title_scanning">Verfügbare Geräte</string>
     <string name="bt_title_connect">Verbinde...</string>
+    <string name="no_name">Unbenannt</string>
+    <string name="bt_not_supported">Ihr Gerät unterstützt BLuetooth nicht</string>
+    <string name="bt_end_connection">Verbindung wurde beendet</string>
+    <string name="bt_error_connect">Verbindung konnte nicht hergestellt werden.</string>
 </resources>

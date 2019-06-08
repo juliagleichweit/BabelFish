@@ -1,3 +1,20 @@
+/**
+ * BabelFish
+ * Copyright (C) 2019  Julia Gleichweit
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package tuwien.babelfish.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
@@ -12,18 +29,21 @@ import java.util.ArrayList;
 
 import tuwien.babelfish.R;
 
-
-public class DeviceListAdapter extends ArrayAdapter<String> {
+/**
+ * Custom adapter to provide views for the ListView.
+ * Displays Bluetoothdevice name and address
+ */
+public class DeviceListAdapter extends ArrayAdapter<BluetoothDevice> {
 
     private LayoutInflater layoutInflater;
-    private ArrayList<String> devices;
+    private ArrayList<BluetoothDevice> devices;
 
     static class ViewHolder {
         public TextView deviceName;
         public TextView deviceAddress;
     }
 
-    public DeviceListAdapter(Context context, ArrayList<String> devices){
+    public DeviceListAdapter(Context context, ArrayList<BluetoothDevice> devices){
         super(context, R.layout.device_adapter_view,devices);
         this.devices = devices;
         layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -47,11 +67,15 @@ public class DeviceListAdapter extends ArrayAdapter<String> {
         ViewHolder holder = (ViewHolder) rowView.getTag();
 
         //BluetoothDevice device = devices.get(position);
-        String device = devices.get(position);
+        BluetoothDevice device = devices.get(position);
 
         if (device != null) {
-            holder.deviceName.setText(device);
-            holder.deviceAddress.setText(device + " address");
+            String name = device.getName();
+            if(name == null || name.isEmpty())
+                name = getContext().getResources().getString(R.string.no_name);
+
+            holder.deviceName.setText(name);
+            holder.deviceAddress.setText(device.getAddress());
         }
 
         return rowView;

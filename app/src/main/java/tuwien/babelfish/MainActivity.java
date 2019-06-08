@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -97,7 +98,12 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         {
             FragmentManager fm = getFragmentManager();
             LanguageDialogFragment dialogFragment = new LanguageDialogFragment();
-            dialogFragment.show(fm, "LanguageDialogFragment");
+            try {
+                dialogFragment.show(fm, "LanguageDialogFragment");
+            }catch(IllegalStateException e){
+                Log.e("BabelfishMain", e.getMessage());
+            }
+
         }
         updateLangIcon(lang);
     }
