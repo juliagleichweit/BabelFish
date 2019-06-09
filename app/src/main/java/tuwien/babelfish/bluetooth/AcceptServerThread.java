@@ -33,6 +33,7 @@ import java.io.IOException;
 class AcceptServerThread extends Thread {
     private static final String TAG = "AcceptServerThread";
     private static final String appName = "tuwien.Babelfish";
+    private static boolean canceled = false;
 
     // The local server socket
     private final BluetoothServerSocket serverSocket;
@@ -47,12 +48,12 @@ class AcceptServerThread extends Thread {
         try{
             tmp = this.bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(appName, BluetoothConnectionService.MY_UUID);
 
-            Log.d(TAG, "AcceptServerThread: Setting up Server using: " + BluetoothConnectionService.MY_UUID);
         }catch (IOException e){
             Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
         }
 
         serverSocket = tmp;
+        canceled = false;
     }
 
     public void run(){
@@ -63,23 +64,22 @@ class AcceptServerThread extends Thread {
         try{
             // This is a blocking call and will only return on a
             // successful connection or an exception
-            Log.d(TAG, "run: RFCOM server socket start.....");
 
             socket = serverSocket.accept();
 
             Log.d(TAG, "run: RFCOM server socket accepted connection.");
 
         }catch (IOException e){
-            Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
+            if(!canceled) {
+                Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
+                BluetoothConnectionService.getInstance(null).showConnectionError();
+            }
         }
 
         // other device connected
         if(socket != null){
             connected(socket);
-        }else{
-            BluetoothConnectionService.getInstance(null).showConnectionError();
         }
-
         Log.i(TAG, "END mAcceptThread ");
     }
 
@@ -95,6 +95,7 @@ class AcceptServerThread extends Thread {
         Log.d(TAG, "cancel: Canceling AcceptServerThread.");
         try {
             serverSocket.close();
+            canceled = true;
         } catch (IOException e) {
             Log.e(TAG, "cancel: Close of AcceptServerThread ServerSocket failed. " + e.getMessage() );
         }

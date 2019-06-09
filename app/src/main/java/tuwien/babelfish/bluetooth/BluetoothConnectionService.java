@@ -24,6 +24,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -36,6 +38,8 @@ import tuwien.babelfish.R;
 
 
 /**
+ * Service managing the connection and maintenance of a Bluetooth connections.
+ * ConnectDialogFragment is used to guide the user through the connection process.
  *
  */
 public class BluetoothConnectionService  {
@@ -52,12 +56,15 @@ public class BluetoothConnectionService  {
     private ConnectClientThread clientThread;
 
     private List<ConnectedThread> connectedThreads;
-    private BluetoothDevice device;
-
+    private ArrayList<BluetoothDevice> devices;
     private ConnectDialogFragment dialogFragment;
 
     OnInputListener callback;
 
+    /**
+     * Set Callback to propagate connection events
+     * @param listener must not be null
+     */
     public void setConnectionListener(OnInputListener listener){
         callback = listener;
     }
@@ -108,7 +115,7 @@ public class BluetoothConnectionService  {
     /**
      * Broadcast Receiver that detects bond state changes (Pairing status changes)
      */
-    private final BroadcastReceiver mBroadcastReceiver4 = new BroadcastReceiver() {
+    private final BroadcastReceiver btBondedStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -119,8 +126,7 @@ public class BluetoothConnectionService  {
                 //case1: bonded already
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED){
                     Log.d(TAG, "BroadcastReceiver: BOND_BONDED.");
-                    //inside BroadcastReceiver4
-                    device = mDevice;
+                    //inside btBondedStateReceiver
                     dismissDialog();
                 }
             }
@@ -146,6 +152,11 @@ public class BluetoothConnectionService  {
     };
 
 
+    /**
+     * Creates instance with the passed activity , further calls do not change the activity
+     * @param activity AppCompatActivity instance; if no activity present, pass null
+     * @return Instance with the first passed activity
+     */
     public static synchronized BluetoothConnectionService getInstance(AppCompatActivity activity) {
         if (instance == null) {
             instance = new BluetoothConnectionService(activity);
@@ -162,11 +173,12 @@ public class BluetoothConnectionService  {
         dialogFragment = new ConnectDialogFragment();
 
         if(activity != null){
-            dialogFragment.activity = activity;
+            //dialogFragment.activity = activity;
             this.context = activity.getApplicationContext();
             this.activity = activity;
         }
 
+        this.devices = new ArrayList<>();
 
         // register receiver to be informed when bluetooth is on
         IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
@@ -178,7 +190,7 @@ public class BluetoothConnectionService  {
 
         //Broadcasts when bond state changes (ie:pairing)
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        context.registerReceiver(mBroadcastReceiver4, filter);
+        context.registerReceiver(btBondedStateReceiver, filter);
     }
 
 
@@ -205,24 +217,41 @@ public class BluetoothConnectionService  {
         callback.changeIcon(true);
     }
 
+    public void removeConnection(ConnectedThread conn){
+        connectedThreads.remove(conn);
+        if(connectedThreads.isEmpty())
+            callback.changeIcon(false);
+    }
+
 
     public void showDialog(){
-        if(dialogFragment!= null) {
-            dialogFragment.showDialog();
-        }else{
-            Log.e(TAG, "dialog is null");
+        if(dialogFragment== null) {
+            dialogFragment = new ConnectDialogFragment();
         }
+            // show connection process dialog
+            FragmentManager fm = activity.getSupportFragmentManager();
+            FragmentTransaction transaction = fm.beginTransaction();
+            dialogFragment.setShowsDialog(true);
+            transaction.add(dialogFragment, "ConnectDialogFragment");
+            transaction.commitAllowingStateLoss();
+
+            start();
     }
 
     public void startClient(BluetoothDevice device,UUID uuid){
         Log.d(TAG, "startClient: Started.");
 
-        this.device = device;
         clientThread = new ConnectClientThread(bluetoothAdapter, device, uuid);
         clientThread.start();
     }
 
+    /**
+     * Close all threads and disable bluetoothAdapter if necessary
+     */
     public void stop() {
+
+        dialogFragment = null;
+        devices.clear();
 
         if (serverThread != null)
             serverThread.cancel();
@@ -231,31 +260,52 @@ public class BluetoothConnectionService  {
             clientThread.cancel();
 
         if(bluetoothAdapter.isDiscovering())
-          bluetoothAdapter.cancelDiscovery();
+            bluetoothAdapter.cancelDiscovery();
 
-        stopClients();
+        stopClient();
     }
 
-    public void stopClients(){
+    /**
+     * Close client connection over Bluetooth
+     */
+    public void stopClient(){
+        // currently only one connection
         for(ConnectedThread c : connectedThreads)
             c.close();
     }
 
+    /**
+     * Check if currently a connection is running
+     * @return true if a client is successfully connected, false otherwise
+     */
     public boolean isConnected(){
         return !connectedThreads.isEmpty();}
 
+    /**
+     * Stop all threads and unregister Bluetooth receivers
+     */
     public void shutdown() {
         stop();
+        // unregister all broadcast receivers to free up resources
         context.unregisterReceiver(btStatusReceiver);
         context.unregisterReceiver(btFindReceiver);
-        context.unregisterReceiver(mBroadcastReceiver4);
+        context.unregisterReceiver(btBondedStateReceiver);
 
         if(bluetoothAdapter.isDiscovering())
             bluetoothAdapter.cancelDiscovery();
     }
 
     public void dismissDialog() {
-        dialogFragment.dismiss();
+        if(dialogFragment != null){
+            dialogFragment.dismiss();
+            if(bluetoothAdapter.isDiscovering())
+                bluetoothAdapter.cancelDiscovery();
+            //dialogFragment = null;
+        }
+    }
+
+    public void onResume(){
+        //dialogFragment.initList(devices);
     }
 
     /**
@@ -275,9 +325,13 @@ public class BluetoothConnectionService  {
             c.write(out);
     }
 
+    /**
+     * Toast message to inform client of connection problems
+     */
     public void showConnectionError(){
         activity.runOnUiThread(() ->{
                 Toast.makeText(context, R.string.bt_error_connect, Toast.LENGTH_SHORT).show();
+                callback.changeIcon(false);
                 dismissDialog();
         });
     }

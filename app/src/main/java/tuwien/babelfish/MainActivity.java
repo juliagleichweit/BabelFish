@@ -18,11 +18,11 @@
 
 package tuwien.babelfish;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
 
         if(lastLang ==-1)
         {
-            FragmentManager fm = getFragmentManager();
+            android.support.v4.app.FragmentManager fm = getSupportFragmentManager();
             LanguageDialogFragment dialogFragment = new LanguageDialogFragment();
             try {
                 dialogFragment.show(fm, "LanguageDialogFragment");
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         switch (item.getItemId()) {
             case R.id.action_lang:
                 // User chose the "Language" item, open  target language preference
-                FragmentManager fm = getFragmentManager();
+                FragmentManager fm = getSupportFragmentManager();
                 LanguageDialogFragment dialogFragment = new LanguageDialogFragment();
                 dialogFragment.show(fm, "Sample Fragment");
                 return true;
@@ -165,22 +165,8 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         }
     }
 
-  @Override
-    public void onStop() {
-        super.onStop();
-        //endSpeechService();
-    }
-
     @Override
-    public void onPause() {
-        super.onPause();
-       // endSpeechService();
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
-  /*
-    private void endSpeechService(){
-        AndroidSpeechRecognition.getInstance().stopListening(true);
-        AndroidSpeechRecognition instance = AndroidSpeechRecognition.getInstance();
-        instance.stopListening(true);
-        instance.destroy();
-    }*/
 }

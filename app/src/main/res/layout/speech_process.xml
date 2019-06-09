@@ -41,7 +41,7 @@
         app:layout_constraintBottom_toTopOf="@+id/record_button"
         app:layout_constraintEnd_toEndOf="@id/et_spoken_text"
         app:layout_constraintStart_toStartOf="@id/et_spoken_text"
-        app:layout_constraintTop_toBottomOf="@id/et_spoken_text" />
+        app:layout_constraintTop_toBottomOf="@id/et_spoken_text"  />
 
     <ImageView
         android:id="@+id/record_button"
@@ -54,12 +54,12 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/bot"
+        app:layout_constraintStart_toEndOf="@+id/iv_bot"
         app:layout_constraintTop_toBottomOf="@id/et_translated_text"
         app:srcCompat="@drawable/microphone" />
 
     <ImageView
-        android:id="@+id/bot"
+        android:id="@+id/iv_bot"
         android:layout_width="99dp"
         android:layout_height="72dp"
         android:layout_marginStart="16dp"
@@ -72,6 +72,17 @@
         app:layout_constraintTop_toTopOf="@+id/record_button"
         app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/bot_grey" />
+
+    <ImageView
+        android:id="@+id/iv_speak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/et_translated_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/speaker" />
 
 </android.support.constraint.ConstraintLayout>
 

@@ -17,10 +17,8 @@
  */
 package tuwien.babelfish.bluetooth;
 
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
-import android.widget.ProgressBar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,14 +41,6 @@ class ConnectedThread extends Thread {
         this.socket = socket;
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
-
-        //dismiss the progressdialog when connection is established
-        try{
-           // progressDialog.dismiss();
-        }catch (NullPointerException e){
-            e.printStackTrace();
-        }
-
 
         try {
             tmpIn = this.socket.getInputStream();
@@ -79,12 +69,16 @@ class ConnectedThread extends Thread {
                 Log.d(TAG, "InputStream: " + incomingMessage);
             } catch (IOException e) {
                 Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage() );
+                BluetoothConnectionService.getInstance(null).removeConnection(this);
                 break;
             }
         }
     }
 
-    //Call this from the main activity to send data to the remote device
+    /**
+     * Send data to other device.
+     * @param bytes data you want to send over the connection
+     */
     public void write(byte[] bytes) {
         String text = new String(bytes, Charset.defaultCharset());
         Log.d(TAG, "write: Writing to outputstream: " + text);
@@ -92,10 +86,13 @@ class ConnectedThread extends Thread {
             outputStream.write(bytes);
         } catch (IOException e) {
             Log.e(TAG, "write: Error writing to output stream. " + e.getMessage() );
+            BluetoothConnectionService.getInstance(null).removeConnection(this);
         }
     }
 
-    /* Call this from the main activity to shutdown the connection */
+    /**
+     *  Shutdown connection
+     */
     public void close() {
         try {
             if(inputStream != null)

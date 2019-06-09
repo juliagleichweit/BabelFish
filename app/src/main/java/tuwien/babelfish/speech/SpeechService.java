@@ -23,7 +23,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -50,9 +49,6 @@ import com.android.volley.VolleyError;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Locale;
-import java.util.Set;
-
 import tuwien.babelfish.CheckConnection;
 import tuwien.babelfish.LanguageDialogFragment;
 import tuwien.babelfish.R;
@@ -72,6 +68,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private EditText et_speech_input;
     private EditText et_translation;
     private ImageView iv_bot;
+    private ImageView iv_speaker;
 
     private boolean startListening = false;
     private boolean initialised = false;
@@ -93,8 +90,18 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
         et_speech_input = rootView.findViewById(R.id.et_spoken_text);
         et_translation = rootView.findViewById(R.id.et_translated_text);
-        iv_bot = rootView.findViewById(R.id.bot);
+        iv_bot = rootView.findViewById(R.id.iv_bot);
+        iv_speaker = rootView.findViewById(R.id.iv_speak);
+        iv_speaker.setOnClickListener(view -> speak(et_translation.getText().toString()));
 
+        // initialize TextToSpeech
+        textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), status ->{
+                if (status == TextToSpeech.SUCCESS) {
+                    initialised = true;
+                } else {
+                    Toast.makeText(getActivity().getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
+                }
+        });
 
         bluetoothAdapter = bluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -103,18 +110,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             Toast.makeText(getActivity().getApplicationContext(), R.string.bt_not_supported, Toast.LENGTH_SHORT);
         }else {
             iv_bot.setOnClickListener(view -> onClickConnect(view));
-            // initialize TextToSpeech
-            textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
-                @Override
-                public void onInit(int status) {
-                    if (status == TextToSpeech.SUCCESS) {
-                        initialised = true;
-                    } else {
-                        Toast.makeText(getActivity().getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
         }
+
         return rootView;
     }
 
@@ -325,13 +322,15 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
         // do we have a running instance we want to disconnect
         if(btService.isConnected()){
+            btService.stopClient();
+            changeIcon(false);
             Toast.makeText(getActivity().getApplicationContext(), R.string.bt_end_connection, Toast.LENGTH_SHORT).show();
         }
         else { // we want to start a connection
-            if (!bluetoothAdapter.isEnabled()) {
+            if (!bluetoothAdapter.isEnabled()) {  // we have to enable bluetooth
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLUETOOTH);
-            } else {
+            } else { // we can show the dialog
                 btService.showDialog();
             }
         }
@@ -348,6 +347,24 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             et_translation.setText(null);
     }
 
+    @Override
+    public void readInput(String input) {
+        // display text received
+        getTranslationView().setText(input);
+        // let the text be read out loud
+        speak(input);
+    }
+
+    @Override
+    public void changeIcon(boolean connected) {
+        if(lastIconState == connected)
+            return;
+
+        lastIconState = connected;
+        int drawable = connected ? R.drawable.bot : R.drawable.bot_grey;
+
+        iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), drawable));
+    }
 
     /**
      * Called when a response from the TranslationService is received.
@@ -362,7 +379,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             translation = response.getString("translation");
             getTranslationView().setText(translation);
 
-            speak(translation);
+            // uncomment if translation should be immediately spoken
+            //speak(translation);
             if(btService != null && btService.isConnected()){
                 btService.write(translation.getBytes());
             }
@@ -376,15 +394,15 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     }
 
     /**
+     * Uses the Android default TextToSpeech implementation to read the sentence out loud
      *
-     * @param sentence
      */
     private synchronized void speak(String sentence){
         if(initialised) {
             // language spoken
             int currLang = AndroidSpeechRecognition.getInstance().getLangCode();
             // language translated to
-            currLang = LanguageDialogFragment.getOppositeCode(currLang);
+            // currLang = LanguageDialogFragment.getOppositeCode(currLang);
             if(lastLangCode!=currLang) {
                 textToSpeech.setLanguage(LanguageDialogFragment.getLocale(currLang));
                 lastLangCode = currLang;
@@ -407,35 +425,33 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      */
     @Override
     public void onErrorResponse(VolleyError error) {
-        getTranslationView().setText(error.getCause().getMessage());
+        getTranslationView().setText(R.string.error_translation);
     }
 
     @Override
     public void onStop() {
         super.onStop();
         endSpeechService();
-        if(textToSpeech != null)
-            textToSpeech.stop();
-        if(btService != null)
-            btService.stop();
 
         TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
-
-        // sockets are closed automatically
-        if(btService != null)
-            btService.stopClients();
 
         Log.d(AndroidSpeechRecognition.TAG, "onStop SpeechRecognition");
     }
 
     @Override
     public void onPause() {
-        super.onPause();
         endSpeechService();
-        if(textToSpeech != null)
-            textToSpeech.stop();
 
+
+        super.onPause();
         Log.d(AndroidSpeechRecognition.TAG, "onPause SpeechRecognition");
+    }
+
+   @Override
+    public void onResume() {
+        super.onResume();
+        if(btService != null)
+            btService.onResume();
     }
 
     @Override
@@ -446,8 +462,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             textToSpeech.shutdown();
         if(btService != null)
             btService.shutdown();
-        if(btService != null)
-            btService.stopClients();
+
         Log.d(AndroidSpeechRecognition.TAG, "onDestroy SpeechRecognition");
     }
 
@@ -458,22 +473,15 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         AndroidSpeechRecognition.getInstance().stopListening(true);
         AndroidSpeechRecognition.getInstance().shutdownService();
         startListening = false;
+        if(textToSpeech != null)
+            textToSpeech.stop();
+
+        if(btService != null)
+            btService.stop();
     }
 
     @Override
-    public void readInput(String input) {
-        getTranslationView().setText(input);
-        speak(input);
-    }
-
-    @Override
-    public void changeIcon(boolean connected) {
-        if(lastIconState == connected)
-            return;
-
-        lastIconState = connected;
-        int drawable = connected ? R.drawable.bot: R.drawable.bot_grey;
-
-        iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), drawable));
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 }

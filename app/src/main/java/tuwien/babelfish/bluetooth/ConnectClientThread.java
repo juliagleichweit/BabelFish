@@ -79,19 +79,22 @@ class ConnectClientThread extends Thread {
             // Close the socket
             try {
                 socket.close();
-                BluetoothConnectionService.getInstance(null).showConnectionError();
                 Log.d(TAG, "run: Closed Socket.");
             } catch (IOException e1) {
                 Log.e(TAG, "mConnectThread: run: Unable to close connection in socket " + e1.getMessage());
             }
+            BluetoothConnectionService.getInstance(null).showConnectionError();
             Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID);
         }
 
-        //will talk about this in the 3rd video
         connected(socket);
     }
 
 
+    /**
+     * Start a new ConnectedThread to manage the the connection and perform transmissions
+     * @param mmSocket
+     */
     private void connected(BluetoothSocket mmSocket) {
         Log.d(TAG, "connected: Starting.");
 
@@ -100,6 +103,9 @@ class ConnectClientThread extends Thread {
         connectedThread.start();
     }
 
+    /**
+     * Cancel thread (closes socket)
+     */
     public void cancel() {
         try {
             Log.d(TAG, "cancel: Closing Client Socket.");

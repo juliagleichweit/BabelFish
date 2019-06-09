@@ -19,9 +19,11 @@ package tuwien.babelfish.bluetooth;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +31,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +48,9 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
     private TextView tv_title;
     private ListView lv_devices;
     private ProgressBar progressBar;
-
     private ArrayList<BluetoothDevice> devices;
     private DeviceListAdapter listAdapter;
-    public AppCompatActivity activity;
+   // public AppCompatActivity activity;
     private BluetoothAdapter bluetoothAdapter;
 
 
@@ -83,6 +83,13 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         return rootView;
     }
 
+    /**
+     * @param devices to be shown in the ListView
+     */
+    public void initList(ArrayList<BluetoothDevice> devices){
+        this.devices = devices;
+    }
+
     private void addPairedDevices(List<BluetoothDevice> list){
         if(bluetoothAdapter != null){
             Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
@@ -106,7 +113,7 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         listAdapter.notifyDataSetChanged();
     }
 
-    public void showDialog(){
+    public void showDialog(AppCompatActivity activity){
         try {
             this.show(activity.getSupportFragmentManager(), "ConnectDialogFragment");
             BluetoothConnectionService.getInstance(activity).start();
@@ -119,10 +126,20 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
         //Toast.makeText(activity.getApplicationContext(), "Clicked on " + devices.get(position).getName(), Toast.LENGTH_SHORT).show();
-        bluetoothAdapter.cancelDiscovery();
+       if(bluetoothAdapter.isDiscovering()) {
+           bluetoothAdapter.cancelDiscovery();
+       }
 
         // start connection to remote device -> init pairing if not done?
-        BluetoothConnectionService.getInstance(activity).startClient(devices.get(position), BluetoothConnectionService.MY_UUID);
+        BluetoothConnectionService.getInstance(null).startClient(devices.get(position), BluetoothConnectionService.MY_UUID);
         setTitle(R.string.bt_title_connect);
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        super.onDismiss(dialog);
+        if(bluetoothAdapter.isDiscovering()) {
+            bluetoothAdapter.cancelDiscovery();
+        }
     }
 }
