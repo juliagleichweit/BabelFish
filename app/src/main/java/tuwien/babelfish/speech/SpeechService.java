@@ -21,7 +21,6 @@ package tuwien.babelfish.speech;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,6 +32,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -81,6 +82,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private boolean allowDiscovery = false;
     private boolean lastIconState = false;
 
+    private FragmentManager fm;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.speech_process, container, false);
@@ -92,7 +95,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         et_translation = rootView.findViewById(R.id.et_translated_text);
         iv_bot = rootView.findViewById(R.id.iv_bot);
         iv_speaker = rootView.findViewById(R.id.iv_speak);
-        iv_speaker.setOnClickListener(view -> speak(et_translation.getText().toString()));
+        iv_speaker.setOnClickListener(view -> speak(et_translation.getText().toString(), true));
 
         // initialize TextToSpeech
         textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), status ->{
@@ -113,6 +116,14 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         }
 
         return rootView;
+    }
+
+    /**
+     * Set FragmentManager from Activity.
+     * Fragment.getActivity().getFragmentManager() returns manager with illegal states
+     */
+    public void setFragmentManager(FragmentManager fm) {
+        this.fm = fm;
     }
 
     public EditText getSpokenView() {
@@ -261,22 +272,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     }
 
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Check which request we're responding to
-        if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
-            // Make sure the request was successful
-            if (resultCode == Activity.RESULT_OK) {
-                // The user enabled bluetooth.
-                //Toast.makeText(getActivity().getApplicationContext(), "Bluetooth turned on", Toast.LENGTH_SHORT).show();
-            }
-            else{
-                //Toast.makeText(getActivity().getApplicationContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
     /**
      * Re-/Starts the speech recognition service
      *
@@ -318,6 +313,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         if(btService == null){
             btService = BluetoothConnectionService.getInstance((AppCompatActivity) getActivity());
             btService.setConnectionListener(this);
+            btService.setFragmentManager(fm);
         }
 
         // do we have a running instance we want to disconnect
@@ -352,7 +348,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         // display text received
         getTranslationView().setText(input);
         // let the text be read out loud
-        speak(input);
+        speak(input, false);
     }
 
     @Override
@@ -397,12 +393,13 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      * Uses the Android default TextToSpeech implementation to read the sentence out loud
      *
      */
-    private synchronized void speak(String sentence){
+    private synchronized void speak(String sentence, boolean useOpposite){
         if(initialised) {
             // language spoken
             int currLang = AndroidSpeechRecognition.getInstance().getLangCode();
             // language translated to
-            // currLang = LanguageDialogFragment.getOppositeCode(currLang);
+            if(useOpposite)
+                currLang = LanguageDialogFragment.getOppositeCode(currLang);
             if(lastLangCode!=currLang) {
                 textToSpeech.setLanguage(LanguageDialogFragment.getLocale(currLang));
                 lastLangCode = currLang;
@@ -440,10 +437,11 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
     @Override
     public void onPause() {
-        endSpeechService();
-
-
         super.onPause();
+
+        //endSpeechService();
+        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
+
         Log.d(AndroidSpeechRecognition.TAG, "onPause SpeechRecognition");
     }
 
@@ -478,10 +476,5 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
         if(btService != null)
             btService.stop();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
     }
 }

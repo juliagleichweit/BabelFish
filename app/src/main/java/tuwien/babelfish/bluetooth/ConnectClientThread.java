@@ -26,6 +26,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
 
+import tuwien.babelfish.R;
+
 /**
  * This thread runs while attempting to make an outgoing connection
  * with a device. It runs straight through; the connection either
@@ -83,7 +85,7 @@ class ConnectClientThread extends Thread {
             } catch (IOException e1) {
                 Log.e(TAG, "mConnectThread: run: Unable to close connection in socket " + e1.getMessage());
             }
-            BluetoothConnectionService.getInstance(null).showConnectionError();
+            BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
             Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID);
         }
 

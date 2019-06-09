@@ -25,6 +25,8 @@ import android.util.Log;
 
 import java.io.IOException;
 
+import tuwien.babelfish.R;
+
 /**
  * This thread runs while listening for incoming connections. It behaves
  * like a server-side client. It runs until a connection is accepted
@@ -72,7 +74,7 @@ class AcceptServerThread extends Thread {
         }catch (IOException e){
             if(!canceled) {
                 Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
-                BluetoothConnectionService.getInstance(null).showConnectionError();
+                BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
             }
         }
 

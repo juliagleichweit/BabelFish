@@ -43,7 +43,7 @@ import tuwien.babelfish.R;
  */
 public class ConnectDialogFragment extends DialogFragment implements AdapterView.OnItemClickListener {
 
-    private static final String TAG = "ConnectdialogFragement";
+    public static final String TAG = "ConnectdialogFragement";
 
     private TextView tv_title;
     private ListView lv_devices;

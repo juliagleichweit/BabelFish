@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
+import tuwien.babelfish.R;
+
 /**
  Finally the ConnectedThread which is responsible for maintaining the BTConnection, Sending the data, and
  receiving incoming data through input/output streams respectively.
@@ -69,7 +71,9 @@ class ConnectedThread extends Thread {
                 Log.d(TAG, "InputStream: " + incomingMessage);
             } catch (IOException e) {
                 Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage() );
-                BluetoothConnectionService.getInstance(null).removeConnection(this);
+                BluetoothConnectionService service = BluetoothConnectionService.getInstance(null);
+                service.removeConnection(this);
+                service.showConnectionError(R.string.bt_end_connection);
                 break;
             }
         }
@@ -87,6 +91,7 @@ class ConnectedThread extends Thread {
         } catch (IOException e) {
             Log.e(TAG, "write: Error writing to output stream. " + e.getMessage() );
             BluetoothConnectionService.getInstance(null).removeConnection(this);
+            BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
         }
     }
 

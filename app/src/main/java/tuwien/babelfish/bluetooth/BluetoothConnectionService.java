@@ -25,7 +25,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -48,7 +47,7 @@ public class BluetoothConnectionService  {
             UUID.fromString("df7006b6-af10-4ada-8a9c-4723c2a0511d");
 
     private static BluetoothConnectionService instance;
-
+    private FragmentManager fm;
     private final BluetoothAdapter bluetoothAdapter;
     Context context;
     AppCompatActivity activity;
@@ -79,7 +78,7 @@ public class BluetoothConnectionService  {
 
         /**
          * Process data received over bluetooth connection
-         * @param input
+         * @param input String from other device
          */
         void readInput(String input);
 
@@ -193,6 +192,13 @@ public class BluetoothConnectionService  {
         context.registerReceiver(btBondedStateReceiver, filter);
     }
 
+    /**
+     * Set FragmentManager from Activity.
+     * Fragment.getActivity().getFragmentManager() returns manager with illegal states
+     */
+    public void setFragmentManager(FragmentManager fm){
+        this.fm = fm;
+    }
 
     /**
      * Start the chat service. Specifically start AcceptServerThread to begin a
@@ -212,12 +218,13 @@ public class BluetoothConnectionService  {
         }
     }
 
-    public void addConnection(ConnectedThread conn){
+    public synchronized void addConnection(ConnectedThread conn){
         connectedThreads.add(conn);
         callback.changeIcon(true);
+        dismissDialog();
     }
 
-    public void removeConnection(ConnectedThread conn){
+    public synchronized void removeConnection(ConnectedThread conn){
         connectedThreads.remove(conn);
         if(connectedThreads.isEmpty())
             callback.changeIcon(false);
@@ -229,11 +236,7 @@ public class BluetoothConnectionService  {
             dialogFragment = new ConnectDialogFragment();
         }
             // show connection process dialog
-            FragmentManager fm = activity.getSupportFragmentManager();
-            FragmentTransaction transaction = fm.beginTransaction();
-            dialogFragment.setShowsDialog(true);
-            transaction.add(dialogFragment, "ConnectDialogFragment");
-            transaction.commitAllowingStateLoss();
+            dialogFragment.show(fm, ConnectDialogFragment.TAG);
 
             start();
     }
@@ -250,7 +253,6 @@ public class BluetoothConnectionService  {
      */
     public void stop() {
 
-        dialogFragment = null;
         devices.clear();
 
         if (serverThread != null)
@@ -272,6 +274,7 @@ public class BluetoothConnectionService  {
         // currently only one connection
         for(ConnectedThread c : connectedThreads)
             c.close();
+        connectedThreads.clear();
     }
 
     /**
@@ -279,7 +282,8 @@ public class BluetoothConnectionService  {
      * @return true if a client is successfully connected, false otherwise
      */
     public boolean isConnected(){
-        return !connectedThreads.isEmpty();}
+        return !connectedThreads.isEmpty();
+    }
 
     /**
      * Stop all threads and unregister Bluetooth receivers
@@ -328,9 +332,9 @@ public class BluetoothConnectionService  {
     /**
      * Toast message to inform client of connection problems
      */
-    public void showConnectionError(){
+    public void showConnectionError(int stringId){
         activity.runOnUiThread(() ->{
-                Toast.makeText(context, R.string.bt_error_connect, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, stringId, Toast.LENGTH_SHORT).show();
                 callback.changeIcon(false);
                 dismissDialog();
         });

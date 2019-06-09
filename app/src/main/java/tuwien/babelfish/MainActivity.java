@@ -32,13 +32,13 @@ import android.view.MenuItem;
 import android.widget.Button;
 
 import tuwien.babelfish.speech.AndroidSpeechRecognition;
+import tuwien.babelfish.speech.SpeechService;
 
 /**
  * This is used to launch speacch processing activities
  */
 public class MainActivity extends AppCompatActivity implements LanguageDialogFragment.OnLanguageSelectedListener {
 
-    private Button button;
     private int lastLang = -1;
 
     private Menu optionsMenu;
@@ -73,6 +73,10 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         if (fragment instanceof LanguageDialogFragment) {
             LanguageDialogFragment langDiaFrag= (LanguageDialogFragment) fragment;
             langDiaFrag.setOnLanguageSelectedListener(this);
+        }
+        if(fragment instanceof SpeechService){
+            SpeechService service = (SpeechService) fragment;
+            service.setFragmentManager(getSupportFragmentManager());
         }
 
     }
@@ -163,10 +167,5 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
 
             updateLangIcon(langCode);
         }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
     }
 }
