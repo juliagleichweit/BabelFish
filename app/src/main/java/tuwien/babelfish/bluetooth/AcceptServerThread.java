@@ -39,16 +39,14 @@ class AcceptServerThread extends Thread {
 
     // The local server socket
     private final BluetoothServerSocket serverSocket;
-    private final BluetoothAdapter bluetoothAdapter;
-    private ConnectedThread connectedThread;
 
     public AcceptServerThread(BluetoothAdapter bluetoothAdapter ){
         BluetoothServerSocket tmp = null;
-        this.bluetoothAdapter = bluetoothAdapter;
+
 
         // Create a new listening server socket
         try{
-            tmp = this.bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(appName, BluetoothConnectionService.MY_UUID);
+            tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(appName, BluetoothConnectionService.MY_UUID);
 
         }catch (IOException e){
             Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
@@ -89,7 +87,7 @@ class AcceptServerThread extends Thread {
         Log.d(TAG, "connected: Starting.");
 
         // Start the thread to manage the connection and perform transmissions
-        connectedThread = new ConnectedThread(mmSocket);
+        ConnectedThread connectedThread = new ConnectedThread(mmSocket);
         connectedThread.start();
     }
 

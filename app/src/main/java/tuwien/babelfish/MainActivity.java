@@ -29,19 +29,16 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 
 import tuwien.babelfish.speech.AndroidSpeechRecognition;
 import tuwien.babelfish.speech.SpeechService;
 
 /**
- * This is used to launch speacch processing activities
+ * This is used to launch speech processing activities
  */
 public class MainActivity extends AppCompatActivity implements LanguageDialogFragment.OnLanguageSelectedListener {
 
     private int lastLang = -1;
-
-    private Menu optionsMenu;
     private MenuItem langPrefMenu;
 
 
@@ -61,8 +58,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
 
-        //  store the menu to var when creating options menu
-        optionsMenu = menu;
+        Menu optionsMenu = menu;
         langPrefMenu = optionsMenu.findItem(R.id.action_lang);
         checkLanguagePref();
         return true;
@@ -92,6 +88,11 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
          for(android.support.v4.app.Fragment f: getSupportFragmentManager().getFragments())
              f.onRequestPermissionsResult(requestCode, permissions,grantResults);
     }
+
+    /**
+     * Check the SharedPreferences to obtain the target language.
+     * If not present show selection dialog.
+     */
     private void checkLanguagePref() {
 
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
@@ -112,6 +113,10 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         updateLangIcon(lang);
     }
 
+    /**
+     * Change language icon depending on the chosen language code
+     * @param langCode see {@link LanguageDialogFragment}
+     */
     private void updateLangIcon(int langCode){
         //MenuItem menu_lang = optionsMenu.findItem(R.id.action_lang);
         lastLang = langCode;
@@ -145,7 +150,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
                 LanguageDialogFragment dialogFragment = new LanguageDialogFragment();
                 dialogFragment.show(fm, "Sample Fragment");
                 return true;
-
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -155,7 +159,6 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
 
     @Override
     public void onSelectedLanguage(int langCode) {
-        Context context = getApplicationContext();
 
         //only consume real preference changes
         if(lastLang!=langCode) {

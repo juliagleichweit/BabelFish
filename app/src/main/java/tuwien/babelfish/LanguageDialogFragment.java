@@ -28,7 +28,7 @@ import android.widget.ImageView;
 import java.util.Locale;
 
 /**
- * Fragment used to edit target language preferences
+ * DialogFragment used to edit target language preferences
  */
 public class LanguageDialogFragment extends DialogFragment {
 
@@ -37,15 +37,24 @@ public class LanguageDialogFragment extends DialogFragment {
     public static final int LANG_DE = 1;
     public static  final int LANG_EN = 2;
 
-    private int lastLang = -1;
-
+    /**
+     * Callback object to pass language selection changes to
+     * @param activity must not be null
+     */
     public void setOnLanguageSelectedListener(Activity activity){
         callback = (OnLanguageSelectedListener) activity;
     }
 
-    //Container Activity must implement this interface
-    //used to pass messages from fragment to containing UI
+    /**
+     * Container Activity must implement this interface
+     * used to pass messages from fragment to containing UI if language selection changes
+     */
     public interface OnLanguageSelectedListener{
+        /**
+         * Notifies observer about target language changes
+         *
+         * @param langCode new user preference
+         */
         void onSelectedLanguage(int langCode);
     }
 
@@ -54,25 +63,15 @@ public class LanguageDialogFragment extends DialogFragment {
         View rootView = inflater.inflate(R.layout.choose_lang_dialog, container, false);
 
         ImageView iv_DE = rootView.findViewById(R.id.dialog_lang_DE);
-        iv_DE.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                callback.onSelectedLanguage(LanguageDialogFragment.LANG_DE);
-                dismiss();
-            }
+        iv_DE.setOnClickListener(view -> {
+            callback.onSelectedLanguage(LanguageDialogFragment.LANG_DE);
+            dismiss();
         });
-        ImageView iv_EN = rootView.findViewById(R.id.dialog_lang_EN);
-        iv_EN.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-               /* Context context = getActivity().getApplicationContext();
-                int duration = Toast.LENGTH_SHORT;
 
-                Toast toast = Toast.makeText(context, view.getContentDescription(), duration);
-                toast.show();*/
+        ImageView iv_EN = rootView.findViewById(R.id.dialog_lang_EN);
+        iv_EN.setOnClickListener(view -> {
                callback.onSelectedLanguage(LanguageDialogFragment.LANG_EN);
                dismiss();
-            }
         });
 
         return rootView;

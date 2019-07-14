@@ -19,15 +19,10 @@
 package tuwien.babelfish.speech;
 
 import android.content.Context;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.EditText;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
-import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -51,6 +46,14 @@ public class TranslationService {
         requestQueue = getRequestQueue();
     }
 
+    /**
+     * Creates a new TranslationService with the associated context. If the service
+     * was already created, subsequent calls do not change the context and the instance with
+     * the original context is returned.
+     *
+     * @param context current activity context; can be null after first call
+     * @return TranslationService instance
+     */
     public static synchronized TranslationService getInstance(Context context) {
         if (instance == null) {
             instance = new TranslationService(context);
@@ -58,20 +61,39 @@ public class TranslationService {
         return instance;
     }
 
+
+    /**
+     * Returns an already existing or new Volley RequestQueue to perform network requests on
+     * @return a started RequestQueue instance
+     */
     public RequestQueue getRequestQueue() {
         if (requestQueue == null) {
-            // getApplicationContext() is key, it keeps you from leaking the
-            // Activity or BroadcastReceiver if someone passes one in.
             requestQueue = Volley.newRequestQueue(ctx.getApplicationContext());
         }
         return requestQueue;
     }
 
+    /**
+     * Add request to the Volley queue.
+     *
+     * @param req not null JSONObject
+     * @param <T> type org.json.JSONObject
+     */
     public <T> void addToRequestQueue(Request<T> req) {
         getRequestQueue().add(req);
     }
 
 
+    /**
+     * Sends a JSONObject to the frengly service to obtain the translated text.
+     * Responses or errors are sent to the passed listeners.
+     *
+     * @param translate text to be translated
+     * @param from source language code
+     * @param to target language code
+     * @param responseListener class implementing Volley.Response.Listener
+     * @param errorListener class implementing Volley.Response.ErrorListener
+     */
     public void translate(String translate, String from, String to, Response.Listener<JSONObject> responseListener, Response.ErrorListener errorListener){
 
         JSONObject jsonObject = new JSONObject();
@@ -93,6 +115,9 @@ public class TranslationService {
 
     }
 
+    /**
+     * Cancels all pending translation associated with TranslationService.TAG.
+     */
     public void cancelRequests(){
         getRequestQueue().cancelAll(TAG);
     }

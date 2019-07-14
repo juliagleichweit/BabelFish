@@ -41,8 +41,6 @@ class ConnectClientThread extends Thread {
 
     private BluetoothAdapter bluetoothAdapter;
 
-    private ConnectedThread connectedThread;
-
     public ConnectClientThread(BluetoothAdapter bluetoothAdapter, BluetoothDevice device, UUID uuid) {
         Log.d(TAG, "ConnectClientThread: started.");
         this.bluetoothAdapter = bluetoothAdapter;
@@ -101,7 +99,7 @@ class ConnectClientThread extends Thread {
         Log.d(TAG, "connected: Starting.");
 
         // Start the thread to manage the connection and perform transmissions
-        connectedThread = new ConnectedThread(mmSocket);
+        ConnectedThread connectedThread = new ConnectedThread(mmSocket);
         connectedThread.start();
     }
 

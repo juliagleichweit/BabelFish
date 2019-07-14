@@ -19,23 +19,21 @@
 package tuwien.babelfish.speech;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,10 +48,11 @@ import com.android.volley.VolleyError;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import tuwien.babelfish.CheckConnection;
 import tuwien.babelfish.LanguageDialogFragment;
 import tuwien.babelfish.R;
 import tuwien.babelfish.bluetooth.BluetoothConnectionService;
+import tuwien.babelfish.util.CheckConnection;
+import tuwien.babelfish.util.PermissionInfoDialog;
 
 /**
  * Fragment used to implement the translation pipeline (speech-to-text -> translation -> text-to-speech)
@@ -63,13 +62,13 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private static final int REQUEST_RECORD_AUDIO = 5;
     private static final int REQUEST_COARSE_LOCATION = 10;
     private static final int REQUEST_ENABLE_BLUETOOTH = 15;
+    private static final String SPEAKER = "Speaker";
 
     private boolean allowRecording = false;
 
     private EditText et_speech_input;
     private EditText et_translation;
     private ImageView iv_bot;
-    private ImageView iv_speaker;
 
     private boolean startListening = false;
     private boolean initialised = false;
@@ -79,7 +78,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothConnectionService btService;
 
-    private boolean allowDiscovery = false;
+    private boolean permanentSpeak = true;
     private boolean lastIconState = false;
 
     private FragmentManager fm;
@@ -88,14 +87,16 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.speech_process, container, false);
 
-        ImageView microfon_icon = rootView.findViewById(R.id.record_button);
-        microfon_icon.setOnClickListener(view -> onClickMicrofon(view));
-
         et_speech_input = rootView.findViewById(R.id.et_spoken_text);
         et_translation = rootView.findViewById(R.id.et_translated_text);
-        iv_bot = rootView.findViewById(R.id.iv_bot);
-        iv_speaker = rootView.findViewById(R.id.iv_speak);
-        iv_speaker.setOnClickListener(view -> speak(et_translation.getText().toString(), true));
+
+        setupMicrophoneView(rootView);
+        setupBTView(rootView);
+        setupSpeakerView(rootView);
+
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        // if not present we still want it to be true
+        permanentSpeak = sharedPref.getBoolean(SPEAKER, true);
 
         // initialize TextToSpeech
         textToSpeech = new TextToSpeech(getActivity().getApplicationContext(), status ->{
@@ -106,7 +107,62 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
                 }
         });
 
-        bluetoothAdapter = bluetoothAdapter.getDefaultAdapter();
+        return rootView;
+    }
+
+    /**
+     * Initialize views for speech to text.
+     *
+     * @param rootView parent layout of the activity
+     */
+    private void setupMicrophoneView(View rootView) {
+        ImageView microphone_icon = rootView.findViewById(R.id.record_button);
+        microphone_icon.setBackgroundResource(R.drawable.animation_microphone);
+        AnimationDrawable animationMicrophone = (AnimationDrawable) microphone_icon.getBackground();
+        AndroidSpeechRecognition.getInstance().setAnimationDrawable(animationMicrophone);
+
+        microphone_icon.setOnClickListener(view -> onClickMicrofon(view));
+
+    }
+
+
+    /**
+     * Initialize views for text to speech. Uses SharedPreferences to determine if translations
+     * should be spoken or not.
+     *
+     * @param rootView parent layout of the activity
+     */
+    private void setupSpeakerView(View rootView) {
+        ImageView iv_speaker = rootView.findViewById(R.id.iv_speak);
+        iv_speaker.setOnClickListener(view ->
+        {
+            // store the preference if the user wants the translation to be always spoken
+            SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+            permanentSpeak = !permanentSpeak;
+
+            int drawable = permanentSpeak ? R.drawable.speaker : R.drawable.speaker_off;
+
+            // we want text to speech and a translation is present
+            if(permanentSpeak && !TextUtils.isEmpty(et_translation.getText()))
+                speak(et_translation.getText().toString(), true);
+
+            iv_speaker.setImageDrawable(getActivity().getResources().getDrawable(drawable));
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean(SPEAKER, permanentSpeak);
+            editor.apply();
+        });
+    }
+
+    /**
+     * Initialize views for Bluetooth.
+     * Toasts an error message if Bluetooth is not available on this device.
+     *
+     * @param rootView parent layout of the activity
+     */
+    private void setupBTView(View rootView) {
+        iv_bot = rootView.findViewById(R.id.iv_bot);
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
             // Device doesn't support Bluetooth
             changeIcon(false);
@@ -115,7 +171,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             iv_bot.setOnClickListener(view -> onClickConnect(view));
         }
 
-        return rootView;
     }
 
     /**
@@ -147,7 +202,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     }
 
         /**
-     * Checks if permissions ACCES_COARSE_LOCATION or ACCESS_FINE_LOCATION is given
+     * Checks if permissions ACCESS_COARSE_LOCATION or ACCESS_FINE_LOCATION is given
      *
      * @return true if permission granted; otherwise false
      */
@@ -171,19 +226,15 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
                 != PackageManager.PERMISSION_GRANTED) {
 
             // Permission is not granted
-            // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(),
                     permission)) {
                 // returns true if the user has previously denied the request, and returns
                 // false if a user has denied a permission and selected the Don't ask again option
-                showPermissionInfoDialog(msg);
+                PermissionInfoDialog.show(getActivity(),msg);
             } else {
                 // No explanation needed; request the permission
                 ActivityCompat.requestPermissions(getActivity(),
                         new String[]{permission}, requestCode);
-
-                // MY_PERMISSIONS_REQUEST_XXX is an app-defined int constant.
-                // The callback method gets the result of the request.
                 return false;
             }
         } else {
@@ -191,47 +242,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             return true;
         }
         return false;
-    }
-
-    /**
-     * Inform user of needed permission and  give shortcut to settings menu
-     */
-    private void showPermissionInfoDialog(String msg) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.title_missing_permission);
-        builder.setMessage(msg);
-        builder.setCancelable(true);
-
-        // on ok go to settings page
-        builder.setPositiveButton(R.string.settings, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                try {
-                    dialogInterface.dismiss();
-
-                    Intent settingsIntent = new Intent();
-
-                    // we want to display the application's settings page
-                    settingsIntent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                    settingsIntent.addCategory(Intent.CATEGORY_DEFAULT);
-                    settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    //identify our app
-                    settingsIntent.setData(Uri.fromParts("package", getActivity().getPackageName(), null));
-                    //start our intent
-                    startActivity(settingsIntent);
-                } catch (Exception e) {
-
-                    Context context = getActivity().getApplicationContext();
-                    int duration = Toast.LENGTH_LONG;
-
-                    Toast toast = Toast.makeText(context, e.getMessage(), duration);
-                    toast.show();
-                }
-            }
-        });
-        // automatically creates and immediately shows the dialog
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     @Override
@@ -247,30 +257,15 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
                     allowRecording = true;
 
                 } else {
-                    // permission denied. Disable the
-                    // functionality that depends on this permission.
+                    // permission denied.
                     allowRecording = false;
                 }
                 return;
             }
-            case REQUEST_COARSE_LOCATION:
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted
-                    allowDiscovery = true;
-
-                } else {
-                    // permission denied.
-                    allowRecording = false;
-                }
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-                // other 'case' lines to check for other
-                // permissions this app might request.
         }
     }
-
 
     /**
      * Re-/Starts the speech recognition service
@@ -294,11 +289,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
                 instance.restartListening();
             }
         } else {
-            int duration = Toast.LENGTH_SHORT;
-
-            Toast toast = Toast.makeText(getActivity().getApplicationContext(), R.string.error_no_network, duration);
-            toast.show();
-
+            Toast.makeText(getActivity().getApplicationContext(), R.string.error_no_network, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -364,8 +355,9 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
     /**
      * Called when a response from the TranslationService is received.
+     * If an error occured onErrorResponse is called instead
      *
-     * @param response
+     * @param response from the translation service
      */
     @Override
     public void onResponse(JSONObject response) {
@@ -375,8 +367,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
             translation = response.getString("translation");
             getTranslationView().setText(translation);
 
-            // uncomment if translation should be immediately spoken
-            //speak(translation);
+            if(permanentSpeak)
+                speak(translation, true);
             if(btService != null && btService.isConnected()){
                 btService.write(translation.getBytes());
             }
@@ -392,6 +384,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     /**
      * Uses the Android default TextToSpeech implementation to read the sentence out loud
      *
+     * @param sentence to be voiced
+     * @param useOpposite if true uses the target language; false uses the current input language
      */
     private synchronized void speak(String sentence, boolean useOpposite){
         if(initialised) {
@@ -431,7 +425,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         endSpeechService();
 
         TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
-
         Log.d(AndroidSpeechRecognition.TAG, "onStop SpeechRecognition");
     }
 
@@ -439,17 +432,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     public void onPause() {
         super.onPause();
 
-        //endSpeechService();
         TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
-
         Log.d(AndroidSpeechRecognition.TAG, "onPause SpeechRecognition");
-    }
-
-   @Override
-    public void onResume() {
-        super.onResume();
-        if(btService != null)
-            btService.onResume();
     }
 
     @Override

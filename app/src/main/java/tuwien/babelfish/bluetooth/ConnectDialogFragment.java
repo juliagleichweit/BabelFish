@@ -22,8 +22,6 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +31,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import tuwien.babelfish.R;
 
@@ -46,11 +42,8 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
     public static final String TAG = "ConnectdialogFragement";
 
     private TextView tv_title;
-    private ListView lv_devices;
-    private ProgressBar progressBar;
     private ArrayList<BluetoothDevice> devices;
     private DeviceListAdapter listAdapter;
-   // public AppCompatActivity activity;
     private BluetoothAdapter bluetoothAdapter;
 
 
@@ -58,9 +51,9 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.bluetooth_dialog, container, false);
 
-        progressBar = rootView.findViewById(R.id.progressBar);
+        ProgressBar progressBar = rootView.findViewById(R.id.progressBar);
         tv_title = rootView.findViewById(R.id.tv_bt_title);
-        lv_devices = rootView.findViewById(R.id.lv_devices);
+        ListView lv_devices = rootView.findViewById(R.id.lv_devices);
 
         setTitle(R.string.bt_title_scanning);
 
@@ -72,9 +65,6 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         listAdapter = new DeviceListAdapter(getActivity().getApplicationContext(), devices);
         lv_devices.setAdapter(listAdapter);
 
-        // add already bonded devices
-        addPairedDevices(devices);
-
         // start discovery
         if(bluetoothAdapter.isDiscovering())
             bluetoothAdapter.cancelDiscovery();
@@ -83,27 +73,7 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         return rootView;
     }
 
-    /**
-     * @param devices to be shown in the ListView
-     */
-    public void initList(ArrayList<BluetoothDevice> devices){
-        this.devices = devices;
-    }
-
-    private void addPairedDevices(List<BluetoothDevice> list){
-        if(bluetoothAdapter != null){
-            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
-
-            if(bondedDevices != null){
-                for(BluetoothDevice d : bondedDevices){
-                    list.add(d);
-                }
-            }
-            listAdapter.notifyDataSetChanged();
-        }
-    }
-
-    public void setTitle(int title){
+    private void setTitle(int title){
         this.tv_title.setText(getResources().getString(title));
     }
 
@@ -111,15 +81,6 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         devices.add(device);
         // notify listview of new data
         listAdapter.notifyDataSetChanged();
-    }
-
-    public void showDialog(AppCompatActivity activity){
-        try {
-            this.show(activity.getSupportFragmentManager(), "ConnectDialogFragment");
-            BluetoothConnectionService.getInstance(activity).start();
-        }catch (RuntimeException e){
-            e.printStackTrace();
-        }
     }
 
 

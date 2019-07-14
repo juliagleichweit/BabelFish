@@ -49,8 +49,8 @@ public class BluetoothConnectionService  {
     private static BluetoothConnectionService instance;
     private FragmentManager fm;
     private final BluetoothAdapter bluetoothAdapter;
-    Context context;
-    AppCompatActivity activity;
+    private Context context;
+    private AppCompatActivity activity;
     private AcceptServerThread serverThread;
     private ConnectClientThread clientThread;
 
@@ -96,16 +96,15 @@ public class BluetoothConnectionService  {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             // When discovery finds a device
-            if (action.equals(bluetoothAdapter.ACTION_STATE_CHANGED)) {
-                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, bluetoothAdapter.ERROR);
+            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
                 switch(state){
-
                     case BluetoothAdapter.STATE_ON:
                         Log.d(TAG, "mBroadcastReceiver1: STATE ON");
                         // start();
                         showDialog();
-                        break;
-
+                        return;
+                    default: return;
                 }
             }
         }
@@ -299,21 +298,20 @@ public class BluetoothConnectionService  {
             bluetoothAdapter.cancelDiscovery();
     }
 
-    public void dismissDialog() {
+    /**
+     * Closes the dialog and cancels running Bluetooth discovery.
+     */
+    private void dismissDialog() {
         if(dialogFragment != null){
             dialogFragment.dismiss();
             if(bluetoothAdapter.isDiscovering())
                 bluetoothAdapter.cancelDiscovery();
-            //dialogFragment = null;
         }
     }
 
-    public void onResume(){
-        //dialogFragment.initList(devices);
-    }
 
     /**
-     * Write to the ConnectedThread in an unsynchronized manner
+     * Write to the ConnectedThread in an un-synchronized manner
      *
      * @param out The bytes to write
      * @see ConnectedThread#write(byte[])

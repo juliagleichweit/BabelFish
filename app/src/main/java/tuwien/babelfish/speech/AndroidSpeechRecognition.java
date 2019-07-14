@@ -20,6 +20,7 @@ package tuwien.babelfish.speech;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -30,7 +31,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import tuwien.babelfish.CheckConnection;
+import tuwien.babelfish.util.CheckConnection;
 import tuwien.babelfish.LanguageDialogFragment;
 import tuwien.babelfish.R;
 
@@ -47,30 +48,44 @@ public class AndroidSpeechRecognition implements RecognitionListener {
 
     private int langCode = LanguageDialogFragment.LANG_EN;
     private SpeechRecognizer speechRecognizer;
-    private Intent speechRecognitionIntent;
-    private boolean listening = false;
+    private Intent speechRecognitionIntent;private boolean listening = false;
 
     private SpeechService callingActivity;
     private Context ctx;
+    private AnimationDrawable animationMicrophone;
 
     private AndroidSpeechRecognition() {
 
         speechRecognitionIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-
         // has to be set
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-
         // allow partial results to give instant feedback
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-
     }
 
+    /**
+     * Creates a new AndroidSpeechRecognition instance and returns it. If the instance
+     * was already created it is returned.
+     *
+
+     * @return AndroidSpeechRecognition instance
+     */
     public static AndroidSpeechRecognition getInstance(){
         if(instance==null)
             instance = new AndroidSpeechRecognition();
 
         return instance;
+    }
+
+    /**
+     * Sets the AnimationDrawable giving user feedback about recognizer state.
+     * Start is called on this animation when the recognizer is ready for speech (stop on end of speech).
+     *
+     * @param drawable non-null AnimationDrawable object
+     */
+    public void setAnimationDrawable(AnimationDrawable drawable){
+        this.animationMicrophone = drawable;
     }
 
     /**
@@ -94,6 +109,7 @@ public class AndroidSpeechRecognition implements RecognitionListener {
     public int getLangCode(){
         return this.langCode;
     }
+
     /**
      * Starts speech recognition service via Intent
      * @param activity calling activity
@@ -114,7 +130,7 @@ public class AndroidSpeechRecognition implements RecognitionListener {
         if(SpeechRecognizer.isRecognitionAvailable(callingActivity.getActivity())) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(callingActivity.getActivity());
 
-            // set listener to surpress Google dialog
+            // set listener to suppress Google dialog
             speechRecognizer.setRecognitionListener(this);
 
             // start listening
@@ -136,11 +152,7 @@ public class AndroidSpeechRecognition implements RecognitionListener {
             return;
 
         if(!CheckConnection.isOnline(ctx)){
-            // make toast
-            int duration = Toast.LENGTH_SHORT;
-
-            Toast toast = Toast.makeText(ctx,  "No Internet connection", duration);
-            toast.show();
+            Toast.makeText(ctx,  "No Internet connection", Toast.LENGTH_SHORT).show();
         }else{
             String from = LanguageDialogFragment.getCode(langCode);
             String to = LanguageDialogFragment.getCode(LanguageDialogFragment.getOppositeCode(langCode));
@@ -184,11 +196,12 @@ public class AndroidSpeechRecognition implements RecognitionListener {
             speechRecognizer.destroy();
     }
 
-    {}
     @Override
     public void onReadyForSpeech(Bundle bundle) {
         Log.d(TAG, "onReadyForSpeech");
         listening = true;
+        animationMicrophone.start();
+        //animationMicrophone.setVisible(true, true);
     }
 
     @Override
@@ -211,6 +224,7 @@ public class AndroidSpeechRecognition implements RecognitionListener {
         Log.d(TAG, "onEndofSpeech");
         listening = false;
         //restartListening();
+        stopAnimation();
     }
 
     @Override
@@ -223,24 +237,20 @@ public class AndroidSpeechRecognition implements RecognitionListener {
         Log.d(TAG, "SpeechRecognizer ErrorCode: " + i);
         //setViewText(callingActivity.getTranslationView(), "SpeechRecognizer ErrorCode: " + i);
         listening = false;
+        stopAnimation();
 
     }
 
+    /**
+     * Stops the animation and sets it invisible.
+     */
+    private void stopAnimation(){
+        animationMicrophone.stop();
+        animationMicrophone.selectDrawable(0);
+    }
     @Override
     public void onResults(Bundle bundle) {
-         // get all results
-        ArrayList data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-
-        //results have been found
-       /* if(data != null) {
-            // display all results
-            String word = (String) data.get(data.size() - 1);
-            setViewText(callingActivity.getSpokenView(), word);
-
-            translate(word);
-        }else{ // no matching results found
-            Log.d(TAG, "No results");
-        }*/
+        // use partial results, often more accurate than the end result
        String text  = callingActivity.getSpokenView().getText().toString();
        translate(text);
     }

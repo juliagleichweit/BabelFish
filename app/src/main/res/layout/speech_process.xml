@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center">
@@ -45,8 +44,8 @@
 
     <ImageView
         android:id="@+id/record_button"
-        android:layout_width="99dp"
-        android:layout_height="72dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="16dp"
@@ -55,8 +54,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/iv_bot"
-        app:layout_constraintTop_toBottomOf="@id/et_translated_text"
-        app:srcCompat="@drawable/microphone" />
+        app:layout_constraintTop_toBottomOf="@id/et_translated_text" />
 
     <ImageView
         android:id="@+id/iv_bot"
@@ -82,7 +80,7 @@
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/et_translated_text"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/speaker" />
+        app:srcCompat="@drawable/speaker"/>
 
 </android.support.constraint.ConstraintLayout>
 

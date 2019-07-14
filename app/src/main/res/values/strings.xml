@@ -20,4 +20,5 @@
     <string name="bt_not_supported">Ihr Gerät unterstützt BLuetooth nicht</string>
     <string name="bt_end_connection">Verbindung wurde beendet</string>
     <string name="bt_error_connect">Verbindung konnte nicht hergestellt werden.</string>
+    <string name="generic_error">Es ist ein unerwarteter Fehler aufgetreten.</string>
 </resources>
