@@ -32,7 +32,7 @@ import java.util.Locale;
  */
 public class LanguageDialogFragment extends DialogFragment {
 
-    OnLanguageSelectedListener callback;
+    private OnLanguageSelectedListener callback;
 
     public static final int LANG_DE = 1;
     public static  final int LANG_EN = 2;
@@ -81,7 +81,7 @@ public class LanguageDialogFragment extends DialogFragment {
      * Returns the String representation of the language code
      * 1 - de
      * 2 - en
-     * @param langCode
+     * @param langCode int representation of the language code
      */
     public static String getCode(int langCode){
         switch (langCode) {
@@ -94,8 +94,10 @@ public class LanguageDialogFragment extends DialogFragment {
     }
 
     /**
-     * Returns the Locale of the language code*
-     * @param langCode
+     * Returns the Locale of the language code
+     * 1 - de
+     * 2 - en
+     * @param langCode int representation of the language code
      */
     public static Locale getLocale(int langCode){
         switch (langCode) {
@@ -111,7 +113,7 @@ public class LanguageDialogFragment extends DialogFragment {
      * Returns the String representation of the opposite language code
      * 1 - de
      * 2 - en
-     * @param langCode
+     * @param langCode int representation of the language code
      */
     public static int getOppositeCode(int langCode){
         switch (langCode) {

@@ -15,7 +15,7 @@
     <string name="error_translation">Fehler bei der Übersetzung</string>
     <string name="error_no_network">"Keine Internetverbindung "</string>
     <string name="bt_title_scanning">Verfügbare Geräte</string>
-    <string name="bt_title_connect">Verbinde...</string>
+    <string name="bt_title_connect">Verbinde…</string>
     <string name="no_name">Unbenannt</string>
     <string name="bt_not_supported">Ihr Gerät unterstützt BLuetooth nicht</string>
     <string name="bt_end_connection">Verbindung wurde beendet</string>

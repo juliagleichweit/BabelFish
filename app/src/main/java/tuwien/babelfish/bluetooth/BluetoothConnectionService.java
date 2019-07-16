@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import tuwien.babelfish.R;
+import tuwien.babelfish.bluetooth.dialog.ConnectDialogFragment;
 
 
 /**
@@ -120,11 +120,9 @@ public class BluetoothConnectionService  {
 
             if(action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)){
                 BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                //3 cases:
-                //case1: bonded already
+                //case1 bonded already
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED){
                     Log.d(TAG, "BroadcastReceiver: BOND_BONDED.");
-                    //inside btBondedStateReceiver
                     dismissDialog();
                 }
             }
@@ -171,7 +169,6 @@ public class BluetoothConnectionService  {
         dialogFragment = new ConnectDialogFragment();
 
         if(activity != null){
-            //dialogFragment.activity = activity;
             this.context = activity.getApplicationContext();
             this.activity = activity;
         }
@@ -317,10 +314,7 @@ public class BluetoothConnectionService  {
      * @see ConnectedThread#write(byte[])
      */
     public void write(byte[] out) {
-        // Create temporary object
-        ConnectedThread r;
 
-        // Synchronize a copy of the ConnectedThread
         Log.d(TAG, "write: Write Called.");
         //perform the write
         for(ConnectedThread c : connectedThreads)

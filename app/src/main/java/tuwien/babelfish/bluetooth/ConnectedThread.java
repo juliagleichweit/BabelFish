@@ -85,7 +85,7 @@ class ConnectedThread extends Thread {
      */
     public void write(byte[] bytes) {
         String text = new String(bytes, Charset.defaultCharset());
-        Log.d(TAG, "write: Writing to outputstream: " + text);
+        Log.d(TAG, "write: Writing to OutputStream: " + text);
         try {
             outputStream.write(bytes);
         } catch (IOException e) {
@@ -106,6 +106,8 @@ class ConnectedThread extends Thread {
                 outputStream.close();
 
             socket.close();
-        } catch (IOException e) { }
+        } catch (IOException e) {
+            Log.d(TAG, "Error closing streams: " + e.getMessage());
+        }
     }
 }

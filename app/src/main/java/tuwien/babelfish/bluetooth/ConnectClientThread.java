@@ -74,6 +74,7 @@ class ConnectClientThread extends Thread {
             // successful connection or an exception
             socket.connect();
 
+            connected(socket);
             Log.d(TAG, "run: ConnectClientThread connected.");
         } catch (IOException e) {
             // Close the socket
@@ -87,13 +88,13 @@ class ConnectClientThread extends Thread {
             Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID);
         }
 
-        connected(socket);
+
     }
 
 
     /**
-     * Start a new ConnectedThread to manage the the connection and perform transmissions
-     * @param mmSocket
+     * Start a new ConnectedThread to manage the connection and perform transmissions
+     * @param mmSocket to read from and write to
      */
     private void connected(BluetoothSocket mmSocket) {
         Log.d(TAG, "connected: Starting.");

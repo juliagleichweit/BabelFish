@@ -44,26 +44,23 @@ public class PermissionInfoDialog {
         builder.setCancelable(true);
 
         // on ok go to settings page
-        builder.setPositiveButton(R.string.settings, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                try {
-                    dialogInterface.dismiss();
+        builder.setPositiveButton(R.string.settings, (dialogInterface, which) -> {
+            try {
+                dialogInterface.dismiss();
 
-                    Intent settingsIntent = new Intent();
+                Intent settingsIntent = new Intent();
 
-                    // we want to display the application's settings page
-                    settingsIntent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                    settingsIntent.addCategory(Intent.CATEGORY_DEFAULT);
-                    settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    //identify our app
-                    settingsIntent.setData(Uri.fromParts("package", activity.getPackageName(), null));
-                    //start our intent
-                    activity.startActivity(settingsIntent);
-                } catch (Exception e) {
-                    Context context = activity.getApplicationContext();
-                    Toast.makeText(context, activity.getResources().getString(R.string.generic_error), Toast.LENGTH_SHORT).show();
-                }
+                // we want to display the application's settings page
+                settingsIntent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                settingsIntent.addCategory(Intent.CATEGORY_DEFAULT);
+                settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                //identify our app
+                settingsIntent.setData(Uri.fromParts("package", activity.getPackageName(), null));
+                //start our intent
+                activity.startActivity(settingsIntent);
+            } catch (Exception e) {
+                Context context = activity.getApplicationContext();
+                Toast.makeText(context, activity.getResources().getString(R.string.generic_error), Toast.LENGTH_SHORT).show();
             }
         });
         // automatically creates and immediately shows the dialog

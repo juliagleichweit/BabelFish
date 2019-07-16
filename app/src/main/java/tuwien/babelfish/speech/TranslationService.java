@@ -34,7 +34,7 @@ import org.json.JSONObject;
  */
 public class TranslationService {
 
-    public static final String TAG = "TRANSL";
+    private static final String TAG = "TRANSL";
     private static final String SERVICE =  "http://frengly.com/frengly/data/translateREST";
 
     private static TranslationService instance;
@@ -66,7 +66,7 @@ public class TranslationService {
      * Returns an already existing or new Volley RequestQueue to perform network requests on
      * @return a started RequestQueue instance
      */
-    public RequestQueue getRequestQueue() {
+    private RequestQueue getRequestQueue() {
         if (requestQueue == null) {
             requestQueue = Volley.newRequestQueue(ctx.getApplicationContext());
         }
@@ -79,7 +79,7 @@ public class TranslationService {
      * @param req not null JSONObject
      * @param <T> type org.json.JSONObject
      */
-    public <T> void addToRequestQueue(Request<T> req) {
+    private <T> void addToRequestQueue(Request<T> req) {
         getRequestQueue().add(req);
     }
 

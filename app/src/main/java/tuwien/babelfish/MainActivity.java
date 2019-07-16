@@ -58,8 +58,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.toolbar_menu, menu);
 
-        Menu optionsMenu = menu;
-        langPrefMenu = optionsMenu.findItem(R.id.action_lang);
+        langPrefMenu = menu.findItem(R.id.action_lang);
         checkLanguagePref();
         return true;
     }
@@ -122,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements LanguageDialogFra
         lastLang = langCode;
 
         //set correct source language
-        AndroidSpeechRecognition.getInstance().setLangPreference(LanguageDialogFragment.getOppositeCode(langCode));
+        AndroidSpeechRecognition.getInstance(null).setLangPreference(LanguageDialogFragment.getOppositeCode(langCode));
 
         if(langPrefMenu !=null) {
             switch (langCode) {
