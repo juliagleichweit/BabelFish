@@ -1,17 +1,17 @@
 /**
  * BabelFish
  * Copyright (C) 2019  Julia Gleichweit
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -48,7 +48,8 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
 
     private int langCode = LanguageDialogFragment.LANG_EN;
     private SpeechRecognizer speechRecognizer;
-    private Intent speechRecognitionIntent;private boolean listening = false;
+    private Intent speechRecognitionIntent;
+    private boolean listening = false;
 
     private SpeechService callingClass;
     private Context ctx;
@@ -71,32 +72,33 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
     @Override
     public void onDone(String id) {
         Log.d(TAG, "Utterance onDone: " + id);
-        if(UtteranceID.equals(id))
+        if (UtteranceID.equals(id))
             callingClass.restartSpeechRecognizer();
     }
 
     /**
-     * @param s
+     * Called when an error has occurred during processing.
+     *  Deprecated, but has to be implemented
+     * @param s utterance ID of the utterance.
      * @deprecated
      */
     @Override
     public void onError(String s) {
-
+        Log.e(TAG, "Utterance onError: " + s);
     }
 
     /**
      * Creates a new AndroidSpeechRecognition instance and returns it. If the instance
      * was already created it is returned.
      *
-
      * @return AndroidSpeechRecognition instance
      */
-    public static AndroidSpeechRecognition getInstance(SpeechService callingClass){
-        if(instance==null) {
+    public static AndroidSpeechRecognition getInstance(SpeechService callingClass) {
+        if (instance == null) {
             instance = new AndroidSpeechRecognition();
         }
 
-        if(callingClass != null) {
+        if (callingClass != null) {
             instance.callingClass = callingClass;
         }
         return instance;
@@ -104,11 +106,11 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
 
     /**
      * Sets the AnimationDrawable giving user feedback about recognizer state.
-     * Start is called on this animation when the recognizer is ready for speech (stop on end of speech).
+     * Start is called on this animation when the recognizer is ready for speech (stop on cancel of speech).
      *
      * @param drawable non-null AnimationDrawable object
      */
-    public void setAnimationDrawable(AnimationDrawable drawable){
+    public void setAnimationDrawable(AnimationDrawable drawable) {
         this.animationMicrophone = drawable;
     }
 
@@ -116,10 +118,10 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
      * Adds language preference to SpeechRecognizer to improve results
      * @param langCode {@link tuwien.babelfish.LanguageDialogFragment}
      */
-    public void setLangPreference(int langCode){
+    public void setLangPreference(int langCode) {
         this.langCode = langCode;
 
-        if(speechRecognizer != null) {
+        if (speechRecognizer != null) {
             speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, langCode);
             speechRecognizer.destroy();
             speechRecognizer = null;
@@ -130,15 +132,14 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
      * Returns the current used language code of the SpeechRecognizer
      * @return source language code
      */
-    public int getLangCode(){
+    public int getLangCode() {
         return this.langCode;
     }
 
     /**
      * Starts speech recognition service via Intent
-     *   activity calling activity
      */
-    public void startSpeechService( ){
+    public void startSpeechService() {
         Log.d(TAG, "startSpeechService");
         ctx = callingClass.getActivity().getApplicationContext();
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, callingClass.getActivity().getPackageName());
@@ -149,36 +150,38 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
     /**
      * Restarts speech recognition service via Intent
      */
-    private void restartService(){
+    private void restartService() {
         // check if recognition is supported by the phone
-        if(SpeechRecognizer.isRecognitionAvailable(callingClass.getActivity())) {
+        if (SpeechRecognizer.isRecognitionAvailable(callingClass.getActivity())) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(callingClass.getActivity());
 
             // set listener to suppress Google dialog
             speechRecognizer.setRecognitionListener(this);
-
-            // start listening
             speechRecognizer.startListening(speechRecognitionIntent);
+
             Log.d(TAG, "startSpeechService");
-        }else {
+        } else {
             // inform user that device does not support this function
             callingClass.getTranslationView().setText(R.string.speech_not_supported);
         }
     }
-    
-    public void restartListening( ){
 
-        if(animationMicrophone.isRunning()){
+    /**
+     * Initializes on first start or re-starts the listening for speech input.
+     * If it is already listening, the listening process is canceled.
+     */
+    public void restartListening() {
+
+        if (animationMicrophone.isRunning()) {
             speechRecognizer.cancel();
             stopAnimation();
             return;
         }
 
-        if(speechRecognizer == null) {
+        if (speechRecognizer == null) {
             startSpeechService();
-        }else {
+        } else {
             Log.d(TAG, "restartSpeechRecognizer listening");
-            //speechRecognizer.cancel();
             speechRecognizer.startListening(speechRecognitionIntent);
         }
     }
@@ -187,14 +190,14 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
      * Stop listening to speech input
      * @param force when true cancels service;
      */
-    public void stopListening(boolean force){
-        if(speechRecognizer == null)
+    public void stopListening(boolean force) {
+        if (speechRecognizer == null)
             return;
 
-        if(listening)
-            if(force) {
+        if (listening)
+            if (force) {
                 speechRecognizer.cancel();
-            }else {
+            } else {
                 speechRecognizer.stopListening();
             }
     }
@@ -202,9 +205,9 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
     /**
      * Shuts down SpeechRecognizer
      */
-    public void shutdownService(){
+    public void shutdownService() {
         Log.d(TAG, "shutdown AndroidSpeechRecognition");
-        if(speechRecognizer != null)
+        if (speechRecognizer != null)
             speechRecognizer.destroy();
     }
 
@@ -212,17 +215,17 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
      * Calls TranslationService to translate the text to current target language
      * @param text to be translated
      */
-    private void translate(String text){
+    private void translate(String text) {
         // do we got text to translate
-        if(text == null || text.isEmpty())
+        if (text == null || text.isEmpty())
             return;
 
-        if(!CheckConnection.isOnline(ctx)){
-            Toast.makeText(ctx,  "No Internet connection", Toast.LENGTH_SHORT).show();
-        }else{
+        if (!CheckConnection.isOnline(ctx)) {
+            Toast.makeText(ctx, "No Internet connection", Toast.LENGTH_SHORT).show();
+        } else {
             String from = LanguageDialogFragment.getCode(langCode);
             String to = LanguageDialogFragment.getCode(LanguageDialogFragment.getOppositeCode(langCode));
-            TranslationService.getInstance(ctx).translate(text, from,to, callingClass, callingClass);
+            TranslationService.getInstance(ctx).translate(text, from, to, callingClass, callingClass);
         }
     }
 
@@ -231,12 +234,11 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
         Log.d(TAG, "onReadyForSpeech");
         listening = true;
         animationMicrophone.start();
-        //animationMicrophone.setVisible(true, true);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        //Log.d(TAG, "onBeginningOfSpeech");
+        Log.d(TAG, "onBeginningOfSpeech");
         listening = true;
     }
 
@@ -259,38 +261,36 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
 
     @Override
     public void onError(int i) {
-        Log.d(TAG,  "error " +  i);
 
         // 8
         switch (i) {
             case 8:
-                callingClass.getTranslationView().setText("Error_Code 8: SpeechRecognizer.ERROR_RECOGNIZER_BUSY");
+                Log.d(TAG, "Error_Code 8: SpeechRecognizer.ERROR_RECOGNIZER_BUSY");
                 break;
-            case 6: callingClass.getTranslationView().setText("Error_Code 6: SpeechRecognizer.ERROR_SPEECH_TIMEOUT");
+            case 6:
+                Log.d(TAG, "Error_Code 6: SpeechRecognizer.ERROR_SPEECH_TIMEOUT");
                 break;
-                case 7 : callingClass.getTranslationView().setText("Error_Code 7: SpeechRecognizer.ERROR_NO_MATCH");
-                   // listening = false;
-                    break;
+            case 7:
+                Log.d(TAG, "Error_Code 7: SpeechRecognizer.ERROR_NO_MATCH");
+                break;
 
         }
-        //6
-        Log.d(TAG, "SpeechRecognizer ErrorCode: " + i);
         stopAnimation();
-
     }
 
     /**
-     * Stops the animation and sets it invisible.
+     * Stops the animation and reset to the first drawable.
      */
-    private void stopAnimation(){
+    public void stopAnimation() {
         animationMicrophone.stop();
         animationMicrophone.selectDrawable(0);
     }
+
     @Override
     public void onResults(Bundle bundle) {
-        // use partial results, often more accurate than the end result
-       String text  = callingClass.getSpokenView().getText().toString();
-       translate(text);
+        // use partial results, often more accurate than the cancel result
+        String text = callingClass.getSpokenView().getText().toString();
+        translate(text);
     }
 
     @Override
@@ -298,20 +298,20 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
         // get all partial results
         ArrayList data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
-        if(data != null) {
+        if (data != null) {
             // display all results
             // gives instant recognition feedback to the user
             String word = (String) data.get(data.size() - 1);
             setViewText(callingClass.getSpokenView(), word);
 
-        }else{ //no matching results found
-         Log.d(TAG, "No partial results");
+        } else { //no matching results found
+            Log.d(TAG, "No partial results");
         }
     }
 
     @Override
     public void onEvent(int i, Bundle bundle) {
-        Log.d(TAG, "onEvent  " + i );
+        Log.d(TAG, "onEvent  " + i);
     }
 
     /**
@@ -320,9 +320,9 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
      * @param v view to be written to
      * @param msg  to be displayed
      */
-    private void setViewText(EditText v, String msg){
-        if(v != null)
-            v.setText(msg);
+    private void setViewText(EditText v, String msg) {
+        if (v != null)
+            v.post(()->v.setText(msg));
     }
 
 

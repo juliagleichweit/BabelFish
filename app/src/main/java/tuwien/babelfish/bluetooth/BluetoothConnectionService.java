@@ -1,17 +1,17 @@
 /**
  * BabelFish
  * Copyright (C) 2019  Julia Gleichweit
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -41,40 +41,38 @@ import tuwien.babelfish.bluetooth.dialog.ConnectDialogFragment;
  * ConnectDialogFragment is used to guide the user through the connection process.
  *
  */
-public class BluetoothConnectionService  {
+public class BluetoothConnectionService {
     private static final String TAG = "BluetoothConnectionServ";
+
+
+    // Bluetooth/Connection management objects
     public static final UUID MY_UUID =
             UUID.fromString("df7006b6-af10-4ada-8a9c-4723c2a0511d");
 
     private static BluetoothConnectionService instance;
-    private FragmentManager fm;
     private final BluetoothAdapter bluetoothAdapter;
-    private Context context;
-    private AppCompatActivity activity;
+    private ArrayList<BluetoothDevice> devices;
+
+    // Manage the connecting and managing of established connections
     private AcceptServerThread serverThread;
     private ConnectClientThread clientThread;
-
     private List<ConnectedThread> connectedThreads;
-    private ArrayList<BluetoothDevice> devices;
+
+    // Should be set by the calling activity
+    private Context context;
+    private AppCompatActivity activity;
+    private OnInputListener callback;
+    private FragmentManager fm;  // possible memory leak, but the fragment's  manager is often null
+
     private ConnectDialogFragment dialogFragment;
-
-    OnInputListener callback;
-
-    /**
-     * Set Callback to propagate connection events
-     * @param listener must not be null
-     */
-    public void setConnectionListener(OnInputListener listener){
-        callback = listener;
-    }
 
 
     /**
      * Container Fragment must implement this interface:
      * used to pass messages from different devices over BT
      *  visualize if connection is established
-    */
-    public interface OnInputListener{
+     */
+    public interface OnInputListener {
 
         /**
          * Process data received over bluetooth connection
@@ -98,13 +96,17 @@ public class BluetoothConnectionService  {
             // When discovery finds a device
             if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-                switch(state){
+                switch (state) {
                     case BluetoothAdapter.STATE_ON:
                         Log.d(TAG, "mBroadcastReceiver1: STATE ON");
-                        // start();
-                        showDialog();
+                        start();
+                        //showDialog();
                         return;
-                    default: return;
+                    case BluetoothAdapter.STATE_TURNING_OFF:
+                        shutdown();
+                        break;
+                    default:
+                        return;
                 }
             }
         }
@@ -118,12 +120,12 @@ public class BluetoothConnectionService  {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
-            if(action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)){
+            if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
                 BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                //case1 bonded already
-                if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED){
+                //case bonded already
+                if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
                     Log.d(TAG, "BroadcastReceiver: BOND_BONDED.");
-                    dismissDialog();
+                    //dismissDialog();
                 }
             }
         }
@@ -138,9 +140,9 @@ public class BluetoothConnectionService  {
             final String action = intent.getAction();
             Log.d(TAG, "onReceive: ACTION FOUND.");
 
-            if (action.equals(BluetoothDevice.ACTION_FOUND)){
-                BluetoothDevice device = intent.getParcelableExtra (BluetoothDevice.EXTRA_DEVICE);
-               if(dialogFragment != null)
+            if (action.equals(BluetoothDevice.ACTION_FOUND)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (dialogFragment != null)
                     dialogFragment.addDevice(device);
                 Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
             }
@@ -168,7 +170,7 @@ public class BluetoothConnectionService  {
         // show connection process dialog
         dialogFragment = new ConnectDialogFragment();
 
-        if(activity != null){
+        if (activity != null) {
             this.context = activity.getApplicationContext();
             this.activity = activity;
         }
@@ -189,16 +191,32 @@ public class BluetoothConnectionService  {
     }
 
     /**
+     * Set Callback to propagate connection events
+     * @param listener must not be null
+     */
+    public void setConnectionListener(OnInputListener listener) {
+        callback = listener;
+    }
+
+    /**
+     * Returns the listener object to be notified over Bluetooth related messages
+     * @return instance set via {@link BluetoothConnectionService#setConnectionListener}
+     */
+    public OnInputListener getCallback() {
+        return this.callback;
+    }
+
+    /**
      * Set FragmentManager from Activity.
      * Fragment.getActivity().getFragmentManager() returns manager with illegal states
      */
-    public void setFragmentManager(FragmentManager fm){
+    public void setFragmentManager(FragmentManager fm) {
         this.fm = fm;
     }
 
     /**
      * Start the chat service. Specifically start AcceptServerThread to begin a
-     * session in listening (server) mode. Called by the Activity onResume()
+     * session in listening (server) mode.
      */
     public synchronized void start() {
         Log.d(TAG, "start");
@@ -214,30 +232,50 @@ public class BluetoothConnectionService  {
         }
     }
 
-    public synchronized void addConnection(ConnectedThread conn){
+    /**
+     * Adds an established connection to the list
+     * @param conn working connection
+     * @throws NullPointerException if conn is null
+     */
+    public synchronized void addConnection(ConnectedThread conn) {
         connectedThreads.add(conn);
         callback.changeIcon(true);
         dismissDialog();
     }
 
-    public synchronized void removeConnection(ConnectedThread conn){
+    /**
+     * Remove established connection from list
+     * @param conn closed connection
+     * @throws NullPointerException if conn is null
+     */
+    public synchronized void removeConnection(ConnectedThread conn) {
         connectedThreads.remove(conn);
-        if(connectedThreads.isEmpty())
+        if (connectedThreads.isEmpty())
             callback.changeIcon(false);
     }
 
 
-    public void showDialog(){
-        if(dialogFragment== null) {
+    /**
+     * Display connection dialog. Additionally starts listening Thread for incoming
+     * connections.
+     */
+    public void showDialog() {
+        if (dialogFragment == null) {
             dialogFragment = new ConnectDialogFragment();
         }
-            // show connection process dialog
-            dialogFragment.show(fm, ConnectDialogFragment.TAG);
+        // show connection process dialog
+        dialogFragment.show(fm, ConnectDialogFragment.TAG);
 
-            start();
+        //start();
     }
 
-    public void startClient(BluetoothDevice device,UUID uuid){
+    /**
+     * Creates a new ConnectClientThread trying to establish an outgoing connection
+     * to the Bluetooth device
+     * @param device BluetoothDevice you want to connect to
+     * @param uuid service record uuid to lookup RFCOMM channel
+     */
+    public void startClient(BluetoothDevice device, UUID uuid) {
         Log.d(TAG, "startClient: Started.");
 
         clientThread = new ConnectClientThread(bluetoothAdapter, device, uuid);
@@ -254,10 +292,10 @@ public class BluetoothConnectionService  {
         if (serverThread != null)
             serverThread.cancel();
 
-        if(clientThread != null)
+        if (clientThread != null)
             clientThread.cancel();
 
-        if(bluetoothAdapter.isDiscovering())
+        if (bluetoothAdapter.isDiscovering())
             bluetoothAdapter.cancelDiscovery();
 
         stopClient();
@@ -266,10 +304,10 @@ public class BluetoothConnectionService  {
     /**
      * Close client connection over Bluetooth
      */
-    public void stopClient(){
+    public void stopClient() {
         // currently only one connection
-        for(ConnectedThread c : connectedThreads)
-            c.close();
+        for (ConnectedThread c : connectedThreads)
+            c.cancel();
         connectedThreads.clear();
     }
 
@@ -277,7 +315,7 @@ public class BluetoothConnectionService  {
      * Check if currently a connection is running
      * @return true if a client is successfully connected, false otherwise
      */
-    public boolean isConnected(){
+    public boolean isConnected() {
         return !connectedThreads.isEmpty();
     }
 
@@ -291,7 +329,7 @@ public class BluetoothConnectionService  {
         context.unregisterReceiver(btFindReceiver);
         context.unregisterReceiver(btBondedStateReceiver);
 
-        if(bluetoothAdapter.isDiscovering())
+        if (bluetoothAdapter.isDiscovering())
             bluetoothAdapter.cancelDiscovery();
     }
 
@@ -299,9 +337,10 @@ public class BluetoothConnectionService  {
      * Closes the dialog and cancels running Bluetooth discovery.
      */
     private void dismissDialog() {
-        if(dialogFragment != null){
+        if (dialogFragment != null) {
+            dialogFragment.clearList();
             dialogFragment.dismiss();
-            if(bluetoothAdapter.isDiscovering())
+            if (bluetoothAdapter.isDiscovering())
                 bluetoothAdapter.cancelDiscovery();
         }
     }
@@ -317,18 +356,18 @@ public class BluetoothConnectionService  {
 
         Log.d(TAG, "write: Write Called.");
         //perform the write
-        for(ConnectedThread c : connectedThreads)
+        for (ConnectedThread c : connectedThreads)
             c.write(out);
     }
 
     /**
      * Toast message to inform client of connection problems
      */
-    public void showConnectionError(int stringId){
-        activity.runOnUiThread(() ->{
-                Toast.makeText(context, stringId, Toast.LENGTH_SHORT).show();
-                callback.changeIcon(false);
-                dismissDialog();
+    public void showConnectionError(int stringId) {
+        activity.runOnUiThread(() -> {
+            Toast.makeText(context, stringId, Toast.LENGTH_SHORT).show();
+            callback.changeIcon(false);
+            dismissDialog();
         });
     }
 }

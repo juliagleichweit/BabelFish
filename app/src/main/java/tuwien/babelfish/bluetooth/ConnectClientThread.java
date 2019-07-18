@@ -48,15 +48,15 @@ class ConnectClientThread extends Thread {
         deviceUUID = uuid;
     }
 
+    @Override
     public void run(){
         BluetoothSocket tmp = null;
         Log.i(TAG, "RUN mConnectThread ");
 
-        // Get a BluetoothSocket for a connection with the
-        // given BluetoothDevice
+        // Get a BluetoothSocket for a connection with the given BluetoothDevice
         try {
             Log.d(TAG, "ConnectClientThread: Trying to create InsecureRfcommSocket using UUID: "
-                    + BluetoothConnectionService.MY_UUID);
+                    + deviceUUID);
             tmp = device.createRfcommSocketToServiceRecord(deviceUUID);
         } catch (IOException e) {
             Log.e(TAG, "ConnectClientThread: Could not create InsecureRfcommSocket " + e.getMessage());
@@ -77,18 +77,16 @@ class ConnectClientThread extends Thread {
             connected(socket);
             Log.d(TAG, "run: ConnectClientThread connected.");
         } catch (IOException e) {
-            // Close the socket
-            try {
-                socket.close();
-                Log.d(TAG, "run: Closed Socket.");
-            } catch (IOException e1) {
-                Log.e(TAG, "mConnectThread: run: Unable to close connection in socket " + e1.getMessage());
-            }
-            BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
-            Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID);
+                // Close the socket
+                try {
+                    socket.close();
+                    Log.d(TAG, "run: Closed Socket.");
+                } catch (IOException e1) {
+                    Log.e(TAG, "mConnectThread: run: Unable to cancel connection in socket " + e1.getMessage());
+                }
+                BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
+                Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID);
         }
-
-
     }
 
 
@@ -105,14 +103,14 @@ class ConnectClientThread extends Thread {
     }
 
     /**
-     * Cancel thread (closes socket)
+     * Stop thread (closes socket)
      */
     public void cancel() {
         try {
             Log.d(TAG, "cancel: Closing Client Socket.");
             socket.close();
         } catch (IOException e) {
-            Log.e(TAG, "cancel: close() of socket in Connectthread failed. " + e.getMessage());
+            Log.e(TAG, "cancel: cancel() of socket in Connectthread failed. " + e.getMessage());
         }
     }
 }

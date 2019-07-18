@@ -74,7 +74,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     private ImageView iv_bot;
     private ImageView microphone_icon;
 
-    private boolean startService = false;
     private boolean tts_initialised = false;
     private int lastLangCode;
 
@@ -99,10 +98,6 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
         setupMicrophoneView(rootView);
         setupBTView(rootView);
-
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-        // if not present we still want it to be true
-        permanentSpeak = sharedPref.getBoolean(SPEAKER, true);
         setupSpeakerView(rootView);
 
         // initialize TextToSpeech
@@ -147,22 +142,29 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      */
     private void setupSpeakerView(View rootView) {
         ImageView iv_speaker = rootView.findViewById(R.id.iv_speak);
+
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        int drawable = permanentSpeak ? R.drawable.speaker : R.drawable.speaker_off;
+        iv_speaker.setImageDrawable(getActivity().getResources().getDrawable(drawable));
+
+        // if not present we still want it to be true
+        permanentSpeak = sharedPref.getBoolean(SPEAKER, true);
+
         iv_speaker.setOnClickListener(view ->
         {
-            // store the preference if the user wants the translation to be always spoken
-            SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
             permanentSpeak = !permanentSpeak;
 
-            int drawable = permanentSpeak ? R.drawable.speaker : R.drawable.speaker_off;
+           int newDrawable = permanentSpeak ? R.drawable.speaker : R.drawable.speaker_off;
+
+            // store the preference if the user wants the translation to be always spoken
+            iv_speaker.setImageDrawable(getActivity().getResources().getDrawable(newDrawable));
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean(SPEAKER, permanentSpeak);
+            editor.apply();
 
             // we want text to speech and a translation is present
             if (permanentSpeak && !TextUtils.isEmpty(et_translation.getText()))
                 speak(et_translation.getText().toString(), true, false);
-
-            iv_speaker.setImageDrawable(getActivity().getResources().getDrawable(drawable));
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putBoolean(SPEAKER, permanentSpeak);
-            editor.apply();
         });
     }
 
@@ -187,6 +189,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         btService = BluetoothConnectionService.getInstance((AppCompatActivity) getActivity());
         btService.setConnectionListener(this);
         btService.setFragmentManager(fm);
+        if(bluetoothAdapter.isEnabled())
+            btService.start();
     }
 
     /**
@@ -298,7 +302,7 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
         if (CheckConnection.isOnline(getActivity().getApplicationContext())) {
             // start service on first click
-                AndroidSpeechRecognition.getInstance(this).restartListening();
+            AndroidSpeechRecognition.getInstance(this).restartListening();
         } else {
             Toast.makeText(getActivity().getApplicationContext(), R.string.error_no_network, Toast.LENGTH_SHORT).show();
         }
@@ -347,17 +351,18 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         lastIconState = connected;
         int drawable = connected ? R.drawable.bot : R.drawable.bot_grey;
 
-        iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), drawable));
+        iv_bot.post(()-> iv_bot.setImageDrawable(ContextCompat.getDrawable(getActivity().getApplicationContext(), drawable)));
     }
 
     @Override
     public void readInput(String input) {
         Log.d(TAG, "onReadInput");
-        // display text received
-        getTranslationView().setText(input);
+        // post event to message queue, otherwise wrong Thread exception
+        getTranslationView().post(()->getTranslationView().setText(input));
+
         // let the text be read out loud
         if (permanentSpeak) {
-            speak(input, false, true);
+            speak(input, false, false);
         }
 
         restartSpeechRecognizer();
@@ -366,29 +371,27 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
     /**
      * Called when a response from the TranslationService is received.
-     * If an error occured onErrorResponse is called instead
+     * If an error occurred onErrorResponse is called instead
      *
      * @param response from the translation service
      */
     @Override
     public void onResponse(JSONObject response) {
         String translation;
-    Log.d(TAG,"onResponse");
         try {
             translation = response.getString("translation");
             getTranslationView().setText(translation);
 
             if (permanentSpeak) {
-                speak(translation, true, true);
+                speak(translation, true, !btService.isConnected());
             } else {
-                if(/*btService == null || */!btService.isConnected()) {
+                if(!btService.isConnected()) {
                     restartSpeechRecognizer();
-                    Log.e(TAG, "restart from onResponse");
+                    Log.d(TAG, "restart from onResponse");
                 }
-
             }
 
-            if (/*btService != null &&*/ btService.isConnected()) {
+            if (btService.isConnected()) {
                 btService.write(translation.getBytes());
             }
         } catch (JSONException e) {
@@ -405,6 +408,8 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
      */
     @Override
     public void onErrorResponse(VolleyError error) {
+        Log.e(TAG, "Error translation: " + error.getMessage());
+        System.out.println("\n\n " + error.networkResponse.statusCode);
         getTranslationView().setText(R.string.error_translation);
     }
 
@@ -429,9 +434,19 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
                 lastLangCode = currLang;
             }
 
+            Log.d(TAG, "Speak + utterance: " + trackUtterance);
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                Bundle params = trackUtterance ? speakParams:null;
-                textToSpeech.speak(sentence, TextToSpeech.QUEUE_FLUSH, params, AndroidSpeechRecognition.UtteranceID);
+
+                Bundle params = null;
+                String id = null;
+
+                if(trackUtterance){
+                    params =speakParams;
+                    id = AndroidSpeechRecognition.UtteranceID;
+                }
+
+                textToSpeech.speak(sentence, TextToSpeech.QUEUE_FLUSH, params, id);
             } else {
                 HashMap params = trackUtterance ? speakParamsMap:null;
                 textToSpeech.speak(sentence, TextToSpeech.QUEUE_FLUSH, params);
@@ -439,41 +454,53 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
         }
     }
 
+    /**
+     * Restarts the SpeechRecognizer after 2s
+     */
+    public void restartSpeechRecognizer() {
+        // post event to message queue, otherwise wrong Thread exception
+        microphone_icon.postDelayed(restartService, 2000);
+    }
+
     @Override
     public void onStop() {
         super.onStop();
-        endSpeechService();
 
-        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
+        stopSpeechService();
+        Log.d(TAG, "onStop");
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
+        Log.d(TAG, "onPause");
+        //stopSpeechService();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        endSpeechService();
-        if (textToSpeech != null)
-            textToSpeech.shutdown();
+        Log.d(TAG, "onDesrtoy");
+
         if (btService != null)
             btService.shutdown();
+
+        if (textToSpeech != null)
+            textToSpeech.shutdown();
+
+        stopSpeechService();
+        AndroidSpeechRecognition.getInstance(this).shutdownService();
     }
 
     /**
      * Stop Listening and destroy SpeechService object
      */
-    private void endSpeechService() {
-        AndroidSpeechRecognition instance = AndroidSpeechRecognition.getInstance(this);
-        instance.stopListening(true);
-        instance.shutdownService();
+    private void stopSpeechService() {
 
-        startService = false;
+        AndroidSpeechRecognition.getInstance(this).stopListening(false);
+        AndroidSpeechRecognition.getInstance(this).stopAnimation();
 
-        // rempve pending restarts
+        // remove pending restarts
         microphone_icon.removeCallbacks(restartService);
 
         if (textToSpeech != null)
@@ -481,9 +508,10 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
 
         if (btService != null)
             btService.stop();
+
+        //removing pending translations
+        TranslationService.getInstance(getActivity().getApplicationContext()).cancelRequests();
     }
 
-    public void restartSpeechRecognizer() {
-        microphone_icon.postDelayed(restartService, 2000);
-    }
+
 }

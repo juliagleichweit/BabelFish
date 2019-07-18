@@ -47,42 +47,46 @@ class AcceptServerThread extends Thread {
         // Create a new listening server socket
         try{
             tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(appName, BluetoothConnectionService.MY_UUID);
-
+            canceled = false;
         }catch (IOException e){
             Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
         }
-
         serverSocket = tmp;
-        canceled = false;
     }
 
+    @Override
     public void run(){
         Log.d(TAG, "run: AcceptServerThread Running.");
 
         BluetoothSocket socket = null;
+        while(!canceled) {
+            try {
+                // This is a blocking call and will only return on a
+                // successful connection or an exception
 
-        try{
-            // This is a blocking call and will only return on a
-            // successful connection or an exception
+                socket = serverSocket.accept();
 
-            socket = serverSocket.accept();
+                Log.d(TAG, "run: RFCOM server socket accepted connection.");
 
-            Log.d(TAG, "run: RFCOM server socket accepted connection.");
+            } catch (IOException e) {
+                if (!canceled) {
+                    Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage());
+                    BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
+                }
+            }
 
-        }catch (IOException e){
-            if(!canceled) {
-                Log.e(TAG, "AcceptServerThread: IOException: " + e.getMessage() );
-                BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
+            // other device connected
+            if (socket != null) {
+                connected(socket);
             }
         }
-
-        // other device connected
-        if(socket != null){
-            connected(socket);
-        }
-        Log.i(TAG, "END mAcceptThread ");
+        Log.i(TAG, "END AcceptThread ");
     }
 
+    /**
+     * Start a new ConnectedThread to manage the connection and perform transmissions
+     * @param mmSocket to read from and write to
+     */
     private void connected(BluetoothSocket mmSocket) {
         Log.d(TAG, "connected: Starting.");
 
@@ -91,11 +95,14 @@ class AcceptServerThread extends Thread {
         connectedThread.start();
     }
 
+    /**
+     * Stop thread (closes socket)
+     */
     public void cancel() {
         Log.d(TAG, "cancel: Canceling AcceptServerThread.");
         try {
-            serverSocket.close();
             canceled = true;
+            serverSocket.close();
         } catch (IOException e) {
             Log.e(TAG, "cancel: Close of AcceptServerThread ServerSocket failed. " + e.getMessage() );
         }

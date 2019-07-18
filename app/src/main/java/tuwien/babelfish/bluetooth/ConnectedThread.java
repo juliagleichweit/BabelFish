@@ -1,17 +1,17 @@
 /**
  * BabelFish
  * Copyright (C) 2019  Julia Gleichweit
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -56,21 +56,24 @@ class ConnectedThread extends Thread {
         BluetoothConnectionService.getInstance(null).addConnection(this);
     }
 
-    public void run(){
+    @Override
+    public void run() {
         byte[] buffer = new byte[1024];  // buffer store for the stream
 
-        int bytes; // bytes returned from read()
+        int bytes;
 
-        // Keep listening to the InputStream until an exception occurs
         while (true) {
-            // Read from the InputStream
+
             try {
                 bytes = inputStream.read(buffer);
                 String incomingMessage = new String(buffer, 0, bytes);
-                BluetoothConnectionService.getInstance(null).callback.readInput(incomingMessage);
+
+                // pass incoming message to UI class
+                BluetoothConnectionService.getInstance(null).getCallback().readInput(incomingMessage);
+
                 Log.d(TAG, "InputStream: " + incomingMessage);
             } catch (IOException e) {
-                Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage() );
+                Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage());
                 BluetoothConnectionService service = BluetoothConnectionService.getInstance(null);
                 service.removeConnection(this);
                 service.showConnectionError(R.string.bt_end_connection);
@@ -89,22 +92,16 @@ class ConnectedThread extends Thread {
         try {
             outputStream.write(bytes);
         } catch (IOException e) {
-            Log.e(TAG, "write: Error writing to output stream. " + e.getMessage() );
+            Log.e(TAG, "write: Error writing to output stream. " + e.getMessage());
             BluetoothConnectionService.getInstance(null).removeConnection(this);
-            BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
         }
     }
 
     /**
-     *  Shutdown connection
+     *  Shutdown connection. Closes all open sockets and streams.
      */
-    public void close() {
+    public void cancel() {
         try {
-            if(inputStream != null)
-                inputStream.close();
-            if(outputStream != null)
-                outputStream.close();
-
             socket.close();
         } catch (IOException e) {
             Log.d(TAG, "Error closing streams: " + e.getMessage());

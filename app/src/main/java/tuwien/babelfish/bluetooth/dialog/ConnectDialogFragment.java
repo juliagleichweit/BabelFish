@@ -22,6 +22,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,7 +68,7 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         lv_devices.setAdapter(listAdapter);
 
         // add already bonded devices
-        addPairedDevices(devices);
+        //addPairedDevices(devices);
 
         // start discovery
         if(bluetoothAdapter.isDiscovering())
@@ -114,11 +115,6 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-        //Toast.makeText(activity.getApplicationContext(), "Clicked on " + devices.get(position).getName(), Toast.LENGTH_SHORT).show();
-       /*if(bluetoothAdapter.isDiscovering()) {
-           bluetoothAdapter.cancelDiscovery();
-       }*/
-
         // start connection to remote device -> init pairing if not done?
         BluetoothConnectionService.getInstance(null).startClient(devices.get(position), BluetoothConnectionService.MY_UUID);
         setTitle(R.string.bt_title_connect);
@@ -130,5 +126,14 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         if(bluetoothAdapter.isDiscovering()) {
             bluetoothAdapter.cancelDiscovery();
         }
+    }
+
+    /**
+     * Remove all elements from the display list.
+     */
+    public void clearList() {
+        FragmentActivity activity = getActivity();
+        if(activity!=null)
+            activity.runOnUiThread(()-> listAdapter.clear());
     }
 }
