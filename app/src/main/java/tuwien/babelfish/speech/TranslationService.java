@@ -39,11 +39,9 @@ public class TranslationService {
 
     private static TranslationService instance;
     private RequestQueue requestQueue;
-    private static Context ctx;
 
     private TranslationService(Context context) {
-        ctx = context;
-        requestQueue = getRequestQueue();
+        requestQueue = getRequestQueue(context);
     }
 
     /**
@@ -64,10 +62,12 @@ public class TranslationService {
 
     /**
      * Returns an already existing or new Volley RequestQueue to perform network requests on
+     *
+     * @param ctx a Context to use for creating the cache dir, null parameters are ignored
      * @return a started RequestQueue instance
      */
-    private RequestQueue getRequestQueue() {
-        if (requestQueue == null) {
+    private RequestQueue getRequestQueue(Context ctx) {
+        if (requestQueue == null && ctx != null) {
             requestQueue = Volley.newRequestQueue(ctx.getApplicationContext());
         }
         return requestQueue;
@@ -80,7 +80,7 @@ public class TranslationService {
      * @param <T> type org.json.JSONObject
      */
     private <T> void addToRequestQueue(Request<T> req) {
-        getRequestQueue().add(req);
+        getRequestQueue(null).add(req);
     }
 
 
@@ -119,6 +119,6 @@ public class TranslationService {
      * Cancels all pending translation associated with TranslationService.TAG.
      */
     public void cancelRequests(){
-        getRequestQueue().cancelAll(TAG);
+        getRequestQueue(null).cancelAll(TAG);
     }
 }

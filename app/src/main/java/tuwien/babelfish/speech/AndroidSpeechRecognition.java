@@ -52,7 +52,6 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
     private boolean listening = false;
 
     private SpeechService callingClass;
-    private Context ctx;
     private AnimationDrawable animationMicrophone;
 
     private AndroidSpeechRecognition() {
@@ -139,9 +138,8 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
     /**
      * Starts speech recognition service via Intent
      */
-    public void startSpeechService() {
+    private void startSpeechService() {
         Log.d(TAG, "startSpeechService");
-        ctx = callingClass.getActivity().getApplicationContext();
         speechRecognitionIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, callingClass.getActivity().getPackageName());
 
         restartService();
@@ -219,6 +217,8 @@ public class AndroidSpeechRecognition extends UtteranceProgressListener implemen
         // do we got text to translate
         if (text == null || text.isEmpty())
             return;
+
+        Context ctx = callingClass.getActivity().getApplicationContext();
 
         if (!CheckConnection.isOnline(ctx)) {
             Toast.makeText(ctx, "No Internet connection", Toast.LENGTH_SHORT).show();

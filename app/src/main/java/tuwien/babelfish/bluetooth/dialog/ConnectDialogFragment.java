@@ -68,7 +68,7 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         lv_devices.setAdapter(listAdapter);
 
         // add already bonded devices
-        //addPairedDevices(devices);
+        addPairedDevices(devices);
 
         // start discovery
         if(bluetoothAdapter.isDiscovering())
@@ -91,7 +91,9 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
      * @param device BluetoothDevice instance
      */
     public void addDevice(BluetoothDevice device){
-        devices.add(device);
+        if(!devices.contains(device))
+            devices.add(device);
+
         // notify listView of new data
         listAdapter.notifyDataSetChanged();
     }
@@ -105,11 +107,9 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
             Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
 
             if(bondedDevices != null){
-                for(BluetoothDevice d : bondedDevices){
-                    list.add(d);
-                }
+                list.addAll(bondedDevices);
+                listAdapter.notifyDataSetChanged();
             }
-            listAdapter.notifyDataSetChanged();
         }
     }
 
@@ -119,6 +119,7 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
         BluetoothConnectionService.getInstance(null).startClient(devices.get(position), BluetoothConnectionService.MY_UUID);
         setTitle(R.string.bt_title_connect);
     }
+
 
     @Override
     public void onDismiss(DialogInterface dialog) {
@@ -131,9 +132,19 @@ public class ConnectDialogFragment extends DialogFragment implements AdapterView
     /**
      * Remove all elements from the display list.
      */
-    public void clearList() {
+    private void clearList() {
         FragmentActivity activity = getActivity();
         if(activity!=null)
             activity.runOnUiThread(()-> listAdapter.clear());
+    }
+
+    /**
+     * If dialog is showing it clears the device list and dismisses the dialog.
+     */
+    public void close() {
+        if(getDialog() != null && getDialog().isShowing()) {
+            clearList();
+            dismiss();
+        }
     }
 }

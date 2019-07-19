@@ -22,7 +22,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:importantForAutofill="no" />
+        android:importantForAutofill="no"
+        android:hint=""/>
 
     <EditText
         android:id="@+id/et_translated_text"
@@ -38,6 +39,7 @@
         android:gravity="start"
         android:inputType="textMultiLine|textNoSuggestions"
         android:scrollbars="vertical"
+        android:autofillHints=""
         app:layout_constraintBottom_toTopOf="@+id/record_button"
         app:layout_constraintEnd_toEndOf="@id/et_spoken_text"
         app:layout_constraintStart_toStartOf="@id/et_spoken_text"
@@ -70,7 +72,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/record_button"
         app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/bot_grey" />
+        app:srcCompat="@drawable/bot_grey"
+        android:contentDescription="@string/iv_bot_descr" />
 
     <ImageView
         android:id="@+id/iv_speak"

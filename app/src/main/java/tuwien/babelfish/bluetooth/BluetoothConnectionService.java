@@ -39,7 +39,6 @@ import tuwien.babelfish.bluetooth.dialog.ConnectDialogFragment;
 /**
  * Service managing the connection and maintenance of a Bluetooth connections.
  * ConnectDialogFragment is used to guide the user through the connection process.
- *
  */
 public class BluetoothConnectionService {
     private static final String TAG = "BluetoothConnectionServ";
@@ -51,15 +50,12 @@ public class BluetoothConnectionService {
 
     private static BluetoothConnectionService instance;
     private final BluetoothAdapter bluetoothAdapter;
-    private ArrayList<BluetoothDevice> devices;
-
     // Manage the connecting and managing of established connections
     private AcceptServerThread serverThread;
     private ConnectClientThread clientThread;
     private List<ConnectedThread> connectedThreads;
 
     // Should be set by the calling activity
-    private Context context;
     private AppCompatActivity activity;
     private OnInputListener callback;
     private FragmentManager fm;  // possible memory leak, but the fragment's  manager is often null
@@ -70,25 +66,27 @@ public class BluetoothConnectionService {
     /**
      * Container Fragment must implement this interface:
      * used to pass messages from different devices over BT
-     *  visualize if connection is established
+     * visualize if connection is established
      */
     public interface OnInputListener {
 
         /**
          * Process data received over bluetooth connection
+         *
          * @param input String from other device
          */
         void readInput(String input);
 
         /**
          * Change the bot icon according to the client connection status
+         *
          * @param connected true if connection is running, otherwise false
          */
         void changeIcon(boolean connected);
     }
 
     /**
-     *  Create a BroadcastReceiver for ACTION_STATE_CHANGE to be informed of bluetooth state
+     * Create a BroadcastReceiver for ACTION_STATE_CHANGE to be informed of bluetooth state
      */
     private final BroadcastReceiver btStatusReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -100,13 +98,12 @@ public class BluetoothConnectionService {
                     case BluetoothAdapter.STATE_ON:
                         Log.d(TAG, "mBroadcastReceiver1: STATE ON");
                         start();
-                        //showDialog();
+                        showDialog();
                         return;
                     case BluetoothAdapter.STATE_TURNING_OFF:
-                        shutdown();
+                        stop();
                         break;
                     default:
-                        return;
                 }
             }
         }
@@ -152,6 +149,7 @@ public class BluetoothConnectionService {
 
     /**
      * Creates instance with the passed activity , further calls do not change the activity
+     *
      * @param activity AppCompatActivity instance; if no activity present, pass null
      * @return Instance with the first passed activity
      */
@@ -171,27 +169,28 @@ public class BluetoothConnectionService {
         dialogFragment = new ConnectDialogFragment();
 
         if (activity != null) {
-            this.context = activity.getApplicationContext();
             this.activity = activity;
+
+            Context context = activity.getApplicationContext();
+
+            // register receiver to be informed when bluetooth is on
+            IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+            context.registerReceiver(btStatusReceiver, BTIntent);
+
+            // register receiver to be informed of devices found
+            IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            context.registerReceiver(btFindReceiver, discoverDevicesIntent);
+
+            //Broadcasts when bond state changes (ie:pairing)
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            context.registerReceiver(btBondedStateReceiver, filter);
+
         }
-
-        this.devices = new ArrayList<>();
-
-        // register receiver to be informed when bluetooth is on
-        IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        context.registerReceiver(btStatusReceiver, BTIntent);
-
-        // register receiver to be informed of devices found
-        IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        context.registerReceiver(btFindReceiver, discoverDevicesIntent);
-
-        //Broadcasts when bond state changes (ie:pairing)
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        context.registerReceiver(btBondedStateReceiver, filter);
     }
 
     /**
      * Set Callback to propagate connection events
+     *
      * @param listener must not be null
      */
     public void setConnectionListener(OnInputListener listener) {
@@ -200,6 +199,7 @@ public class BluetoothConnectionService {
 
     /**
      * Returns the listener object to be notified over Bluetooth related messages
+     *
      * @return instance set via {@link BluetoothConnectionService#setConnectionListener}
      */
     public OnInputListener getCallback() {
@@ -234,6 +234,7 @@ public class BluetoothConnectionService {
 
     /**
      * Adds an established connection to the list
+     *
      * @param conn working connection
      * @throws NullPointerException if conn is null
      */
@@ -245,6 +246,7 @@ public class BluetoothConnectionService {
 
     /**
      * Remove established connection from list
+     *
      * @param conn closed connection
      * @throws NullPointerException if conn is null
      */
@@ -272,8 +274,9 @@ public class BluetoothConnectionService {
     /**
      * Creates a new ConnectClientThread trying to establish an outgoing connection
      * to the Bluetooth device
+     *
      * @param device BluetoothDevice you want to connect to
-     * @param uuid service record uuid to lookup RFCOMM channel
+     * @param uuid   service record uuid to lookup RFCOMM channel
      */
     public void startClient(BluetoothDevice device, UUID uuid) {
         Log.d(TAG, "startClient: Started.");
@@ -287,10 +290,10 @@ public class BluetoothConnectionService {
      */
     public void stop() {
 
-        devices.clear();
-
-        if (serverThread != null)
+        if (serverThread != null) {
             serverThread.cancel();
+            serverThread = null;
+        }
 
         if (clientThread != null)
             clientThread.cancel();
@@ -313,6 +316,7 @@ public class BluetoothConnectionService {
 
     /**
      * Check if currently a connection is running
+     *
      * @return true if a client is successfully connected, false otherwise
      */
     public boolean isConnected() {
@@ -324,7 +328,9 @@ public class BluetoothConnectionService {
      */
     public void shutdown() {
         stop();
+
         // unregister all broadcast receivers to free up resources
+        Context context = activity.getApplicationContext();
         context.unregisterReceiver(btStatusReceiver);
         context.unregisterReceiver(btFindReceiver);
         context.unregisterReceiver(btBondedStateReceiver);
@@ -338,8 +344,7 @@ public class BluetoothConnectionService {
      */
     private void dismissDialog() {
         if (dialogFragment != null) {
-            dialogFragment.clearList();
-            dialogFragment.dismiss();
+            dialogFragment.close();
             if (bluetoothAdapter.isDiscovering())
                 bluetoothAdapter.cancelDiscovery();
         }
@@ -365,7 +370,7 @@ public class BluetoothConnectionService {
      */
     public void showConnectionError(int stringId) {
         activity.runOnUiThread(() -> {
-            Toast.makeText(context, stringId, Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity.getApplicationContext(), stringId, Toast.LENGTH_SHORT).show();
             callback.changeIcon(false);
             dismissDialog();
         });
