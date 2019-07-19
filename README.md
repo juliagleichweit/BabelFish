@@ -11,7 +11,7 @@ The service is limited to German and English.
 
 # Current Status
 <figure>
-  <img src="/current_stat/overview_babelfish.png"/>
+  <img src="/current_stat/0.3.0/overview_babelfish.png"/>
   <figcaption>Overview on user's device.</figcaption>
 </figure>
 
@@ -28,16 +28,20 @@ The result of the Frengly translation service is displayed here.
  If a connection to a different device has been established the translated text is send to the other device via Bluetooth. The receiving device displays the translation in its translation view and uses the TextToSpeech service from Android to speak the text. The service uses English if your source language is English, otherwise German. It is assumed that connected devices always have different target languages. 
  
 #### (4) Listen
-Uses the TextToSpeech service to vocalize the translation in your target language. 
+Uses the TextToSpeech service to vocalize the translation in your target language. On default the translations are always converted into speech.
 
 #### (5) Connect
-<img style="float: right;" src="/current_stat/connect_dialog.jpg">
-Opens the dialog to connect to an available bluetooth device. Both devices must have the app installed and opened the dialog (Sockets are only opened on demand, no busy-waiting).
+<img style="float: right;" src="/current_stat/0.3.0/connect_dialog.jpg">
+Opens the dialog to connect to an available bluetooth device. Both devices must have the app installed and Bluetooth must be enabled.
 If Bluetooth is not enabled, the app asks for permission to do so. If granted Bluetooth is enabled automatically. 
 
 After choosing a device it tries to establish a connection (also indicated by the changed title [Connecting...]). If successful the dialog is closed and the bot is colored. Otherwise an error message is displayed and the bot stays grey.
 
 #### (6) Speak
-Clicking the microfon starts the speech recognition process.  A working internet connection must be present. If not an appropriate error message is displayed.
-The beginning and end of the recognition process is accompanied by a short sound. 
+Clicking the microfon starts the speech recognition process. A working internet connection must be present. If not an appropriate error message is displayed.
+The beginning and end of the recognition process is accompanied by a short sound and animation. 
 Permission to use the microfon has to be granted.
+
+If the speech input could be processed and translated the speech recognition process is automatically restarted:
+* after 2 seconds if the translation is only presented in text
+* 2 seconds after the speech synthesis is finished

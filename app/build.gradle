@@ -16,7 +16,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             android.applicationVariants.all { variant ->
                 variant.outputs.all {
-                    outputFileName = "${applicationId}_${versionCode}_${variant.buildType.name}.apk"
+                    outputFileName = "${applicationId}_${versionName}_${variant.buildType.name}.apk"
                 }
             }
         }
