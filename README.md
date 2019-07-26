@@ -25,7 +25,8 @@ Recognition results are given in a real-time fashion by displaying partial resul
 
 #### (3) Translated Text
 The result of the Frengly translation service is displayed here.
- If a connection to a different device has been established the translated text is send to the other device via Bluetooth. The receiving device displays the translation in its translation view and uses the TextToSpeech service from Android to speak the text. The service uses English if your source language is English, otherwise German. It is assumed that connected devices always have different target languages. 
+ If a connection to a different device has been established the translated text is send to the other device via Bluetooth. The receiving device displays the translation in its translation view and uses the TextToSpeech service from Android to speak the text. The service uses English if your target language is English, otherwise German. It is assumed that connected devices always have different target languages. 
+ In the case of an error it is also displayed in the translation view, but not sent to the connected device.
  
 #### (4) Listen
 Uses the TextToSpeech service to vocalize the translation in your target language. On default the translations are always converted into speech.

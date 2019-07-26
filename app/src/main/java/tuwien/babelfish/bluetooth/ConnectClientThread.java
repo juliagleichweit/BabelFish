@@ -85,7 +85,7 @@ class ConnectClientThread extends Thread {
                     Log.e(TAG, "mConnectThread: run: Unable to cancel connection in socket " + e1.getMessage());
                 }
                 BluetoothConnectionService.getInstance(null).showConnectionError(R.string.bt_error_connect);
-                Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID);
+                Log.d(TAG, "run: ConnectClientThread: Could not connect to UUID: " + BluetoothConnectionService.MY_UUID + " : " + e.getMessage());
         }
     }
 

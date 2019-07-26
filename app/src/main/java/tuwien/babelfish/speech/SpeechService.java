@@ -333,14 +333,14 @@ public class SpeechService extends Fragment implements Response.Listener<JSONObj
     }
 
     /**
-     * Remove any text in the EditText views
+     * Removes text from the speech input view
      */
-    private void clearEditText() {
+    public void clearEditText() {
         if (et_speech_input != null)
             et_speech_input.setText(null);
 
-        if (et_translation != null)
-            et_translation.setText(null);
+        /*if (et_translation != null)
+            et_translation.setText(null);*/
     }
 
     @Override

@@ -36,7 +36,7 @@ public class LanguageDialogFragment extends DialogFragment {
 
     public static final int LANG_DE = 1;
     public static  final int LANG_EN = 2;
-
+    private boolean isLanguageSelected = false;
     /**
      * Callback object to pass language selection changes to
      * @param activity must not be null
@@ -64,16 +64,20 @@ public class LanguageDialogFragment extends DialogFragment {
 
         ImageView iv_DE = rootView.findViewById(R.id.dialog_lang_DE);
         iv_DE.setOnClickListener(view -> {
-            callback.onSelectedLanguage(LanguageDialogFragment.LANG_DE);
+            callback.onSelectedLanguage(LANG_DE);
+            isLanguageSelected = true;
             dismiss();
         });
 
         ImageView iv_EN = rootView.findViewById(R.id.dialog_lang_EN);
         iv_EN.setOnClickListener(view -> {
-               callback.onSelectedLanguage(LanguageDialogFragment.LANG_EN);
+               callback.onSelectedLanguage(LANG_EN);
+                isLanguageSelected = true;
                dismiss();
         });
 
+        // user must choose one language
+        setCancelable(false);
         return rootView;
     }
 
@@ -91,6 +95,18 @@ public class LanguageDialogFragment extends DialogFragment {
                 return "en";
             default: return "en";
         }
+    }
+
+    /**
+     * Dismiss the fragment and its dialog.
+     * Checks if a language was selected before closing the dialog.
+     * If not English is set as default target language
+     */
+    @Override
+    public void dismiss() {
+        super.dismiss();
+        if(!isLanguageSelected)
+            callback.onSelectedLanguage(LANG_EN);
     }
 
     /**
